@@ -1,0 +1,947 @@
+<title>Sổ Tay The Isle</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Be+Vietnam+Pro:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: field journal — fog-dark header with live room bar, filter rail, specimen grid, detail sheet */
+:root {
+  --bg: #eef0ea; --surface: #f9faf6; --ink: #1d231f; --muted: #5d675f; --line: #d3d8cf;
+  --accent: #a8641a; --accent-ink: #fff8ee; --fog: #dfe4db;
+  --carn: #b0402f; --herb: #3f7a45; --omni: #8a6b1f;
+  --sil: #33403a;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Be Vietnam Pro", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121614; --surface: #1a201d; --ink: #e6ebe4; --muted: #95a198; --line: #2c3530;
+  --accent: #e0a24c; --accent-ink: #1a1408; --fog: #202824;
+  --carn: #e2725f; --herb: #79b780; --omni: #d2b05a; --sil: #c3cdc5; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121614; --surface: #1a201d; --ink: #e6ebe4; --muted: #95a198; --line: #2c3530;
+  --accent: #e0a24c; --accent-ink: #1a1408; --fog: #202824;
+  --carn: #e2725f; --herb: #79b780; --omni: #d2b05a; --sil: #c3cdc5; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55 }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+header { background: var(--fog); border-bottom: 1px solid var(--line) }
+header .wrap { padding-block: 28px 20px; display: flex; flex-wrap: wrap; gap: 20px; align-items: end; justify-content: space-between }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted) }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(40px, 7vw, 68px); line-height: .92; margin: 6px 0 8px; text-transform: uppercase; letter-spacing: .01em; text-wrap: balance }
+h1 span { color: var(--accent) }
+.lede { margin: 0; max-width: 58ch; color: var(--muted) }
+
+.room { display: flex; flex-direction: column; gap: 8px; min-width: 0 }
+.room-head { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--muted) }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted) }
+.room.live .dot { background: var(--herb); box-shadow: 0 0 0 4px color-mix(in srgb, var(--herb) 25%, transparent) }
+.faces { display: flex; flex-wrap: wrap; gap: 6px; max-width: 360px }
+.face { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px 3px 3px; font-size: 13px; max-width: 220px }
+.face img { width: 22px; height: 22px; border-radius: 50%; flex: none }
+.face b { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.face small { color: var(--muted); white-space: nowrap }
+.nick { display: grid; gap: 4px; max-width: 360px }
+.nick label { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted) }
+.nick-row { display: flex; gap: 6px }
+.nick input { flex: 1; min-width: 0; font: 14px var(--body); padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink) }
+.nick button { font: 500 13px var(--body); padding: 6px 14px; border-radius: 8px; border: 1px solid var(--ink); background: var(--ink); color: var(--bg); cursor: pointer }
+.nick input:focus-visible, .nick button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding-block: 18px }
+.chips { display: flex; flex-wrap: wrap; gap: 6px }
+.chip { font: 500 13px var(--body); border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 6px 12px; border-radius: 999px; cursor: pointer }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink) }
+.chip:focus-visible, .card:focus-visible, input:focus-visible, .close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+#q { flex: 1 1 200px; min-width: 0; font: 15px var(--body); padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink) }
+.count { font-family: var(--mono); font-size: 12px; color: var(--muted) }
+
+.section-label { font-family: var(--display); font-weight: 600; font-size: 22px; text-transform: uppercase; letter-spacing: .04em; margin: 18px 0 10px; display: flex; gap: 10px; align-items: baseline }
+.section-label small { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .08em }
+.grid { margin-top: 4px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding-bottom: 12px }
+.card { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; cursor: pointer; color: var(--ink); font: inherit; display: flex; flex-direction: column; gap: 6px; transition: transform .15s, border-color .15s }
+.card:hover { transform: translateY(-2px); border-color: var(--accent) }
+.card svg { width: 100%; height: auto; aspect-ratio: 200 / 110; color: var(--sil) }
+.card .name { font-family: var(--display); font-weight: 800; font-size: 24px; line-height: 1; text-transform: uppercase }
+.card .meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap }
+.watchers { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--accent) }
+.pill { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; border: 1px solid currentColor }
+.pill.carn { color: var(--carn) } .pill.herb { color: var(--herb) } .pill.omni { color: var(--omni) }
+.pill.tier { color: var(--muted) }
+.pill.hab { color: var(--accent) }
+.controls .chips + .chips { padding-left: 10px; border-left: 1px solid var(--line) }
+
+.sheet { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 60%, transparent); backdrop-filter: blur(3px); display: flex; justify-content: flex-end; z-index: 20 }
+.panel { width: min(560px, 100%); height: 100%; overflow-y: auto; background: var(--surface); border-left: 1px solid var(--line); padding: calc(20px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) calc(32px + env(safe-area-inset-bottom, 0px)) 20px; display: flex; flex-direction: column; gap: 14px }
+.panel svg { width: 100%; height: auto; aspect-ratio: 200/110; color: var(--sil); background: var(--fog); border-radius: 10px }
+.panel h2 { font-family: var(--display); font-weight: 800; font-size: 46px; line-height: .95; margin: 0; text-transform: uppercase }
+.sci { font-style: italic; color: var(--muted); margin: 2px 0 0 }
+.close { align-self: flex-end; background: none; border: 1px solid var(--line); color: var(--ink); border-radius: 999px; padding: 4px 12px; font: 500 13px var(--body); cursor: pointer }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px }
+.fact { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px }
+.fact dt { font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted) }
+.fact dd { margin: 2px 0 0; font-weight: 600 }
+.block h3 { font-family: var(--display); font-weight: 600; font-size: 20px; text-transform: uppercase; letter-spacing: .04em; margin: 0 0 4px; color: var(--accent) }
+.block p { margin: 0 }
+.block ul { margin: 0; padding-left: 18px; display: grid; gap: 4px }
+.cowatch { font-size: 13px; color: var(--muted) }
+.duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px }
+.mut { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px }
+.mut li { display: flex; gap: 10px; align-items: baseline; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px }
+.slot { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); min-width: 72px }
+.note { font-size: 12.5px; color: var(--muted); margin-top: 6px !important }
+.guide { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 4px 16px; margin-top: 18px }
+.guide summary { cursor: pointer; font-family: var(--display); font-weight: 600; font-size: 20px; text-transform: uppercase; letter-spacing: .04em; padding-block: 10px }
+.guide summary small { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; margin-left: 8px }
+.guide-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; padding-bottom: 14px }
+.guide-body h4 { margin: 0 0 4px; font-size: 14px; color: var(--accent) }
+.guide-body p, .guide-body ul { margin: 0; font-size: 14px }
+.guide-body ul { padding-left: 18px; display: grid; gap: 3px }
+
+.toasts { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 8px; z-index: 30; max-width: calc(100% - 32px) }
+.toast { display: flex; align-items: center; gap: 10px; background: var(--ink); color: var(--bg); padding: 10px 14px 10px 10px; border-radius: 10px; font-size: 14px; box-shadow: 0 8px 24px rgb(0 0 0 / .25); animation: rise .25s ease-out }
+.toast img { width: 28px; height: 28px; border-radius: 50%; flex: none }
+.toast.leave { opacity: .85 }
+@keyframes rise { from { transform: translateY(8px); opacity: 0 } }
+footer { color: var(--muted); font-size: 12.5px; padding-block: 28px 40px; border-top: 1px solid var(--line); margin-top: 20px }
+.card .photo { width: 100%; height: auto; aspect-ratio: 200 / 110; object-fit: contain; border-radius: 6px; background: var(--fog) }
+.hero { margin: 0; display: grid; gap: 6px }
+.hero .photo, .hero svg { width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: contain; border-radius: 10px; background: var(--fog) }
+.credit { margin: 0; font-size: 12px; color: var(--muted) }
+.credit a { color: var(--accent) }
+details.sub summary { cursor: pointer; font-size: 14px; color: var(--accent); padding-block: 4px }
+details.sub ul { margin-top: 6px !important; font-size: 14px }
+.key-body { padding-bottom: 14px; overflow-x: auto }
+.keys { border-collapse: collapse; font-size: 14px; min-width: 100% }
+.keys td { padding: 6px 10px 6px 0; border-top: 1px solid var(--line); vertical-align: top }
+.keys td:first-child { white-space: nowrap; width: 1%; padding-right: 18px }
+kbd { font: 500 12px var(--mono); background: var(--fog); color: var(--ink); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; white-space: nowrap }
+.hold { font-family: var(--mono); font-size: 11px; color: var(--muted) }
+.unsure { color: var(--accent) }
+.keyrow { list-style: none; padding: 0 !important; margin-top: 8px !important; display: grid; gap: 5px; font-size: 13px }
+.keyrow span:not(.hold) { color: var(--muted) }
+.mut small { color: var(--muted); font-size: 13px }
+html[lang="en"] [data-l="vi"], html[lang="vi"] [data-l="en"] { display: none !important }
+.lang { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; align-self: flex-start }
+.lang button { font: 500 12px var(--mono); letter-spacing: .06em; background: var(--surface); color: var(--muted); border: 0; padding: 5px 12px; cursor: pointer }
+.lang button[aria-pressed="true"] { background: var(--ink); color: var(--bg) }
+.lang button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px }
+@media (prefers-reduced-motion: reduce) { .card, .toast { transition: none; animation: none } }
+</style>
+
+<header>
+  <div class="wrap">
+    <div>
+      <div class="eyebrow"><span data-l="vi">Sổ tay sinh tồn</span><span data-l="en">Survival field guide</span> · Evrima &amp; Legacy</div>
+      <h1><span data-l="vi">Sổ Tay <span>The Isle</span></span><span data-l="en"><span>The Isle</span> Field Guide</span></h1>
+      <p class="lede" data-l="vi">Hồ sơ từng loài khủng long chơi được trong The Isle: tập tính, thức ăn và cách sống sót trên đảo. Bấm vào một loài để mở hồ sơ.</p>
+      <p class="lede" data-l="en">A profile of every playable dinosaur in The Isle: behaviour, diet and how to stay alive on the island. Tap a species to open its profile.</p>
+    </div>
+    <div class="room" id="room">
+      <div class="lang" role="group" aria-label="Ngôn ngữ / Language">
+        <button data-lang="vi" aria-pressed="true">Tiếng Việt</button><button data-lang="en" aria-pressed="false">English</button>
+      </div>
+      <div class="room-head"><span class="dot"></span><span id="roomText">Đang kết nối phòng…</span></div>
+      <div class="faces" id="faces"></div>
+      <form class="nick" id="nickForm" hidden>
+        <label for="nickInput" id="nickLabel">Biệt danh của bạn</label>
+        <div class="nick-row"><input id="nickInput" maxlength="24" autocomplete="nickname"><button type="submit" id="nickSave">Lưu</button></div>
+      </form>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="controls">
+    <div class="chips" id="dietChips" role="group" aria-label="Chế độ ăn / Diet">
+      <button class="chip" data-diet="all" aria-pressed="true"><span data-l="vi">Tất cả</span><span data-l="en">All</span></button>
+      <button class="chip" data-diet="carn" aria-pressed="false"><span data-l="vi">Ăn thịt</span><span data-l="en">Carnivore</span></button>
+      <button class="chip" data-diet="herb" aria-pressed="false"><span data-l="vi">Ăn cỏ</span><span data-l="en">Herbivore</span></button>
+      <button class="chip" data-diet="omni" aria-pressed="false"><span data-l="vi">Ăn tạp</span><span data-l="en">Omnivore</span></button>
+    </div>
+    <div class="chips" id="habChips" role="group" aria-label="Môi trường / Habitat">
+      <button class="chip" data-hab="all" aria-pressed="true"><span data-l="vi">Mọi nơi</span><span data-l="en">Anywhere</span></button>
+      <button class="chip" data-hab="land" aria-pressed="false"><span data-l="vi">Trên cạn</span><span data-l="en">Land</span></button>
+      <button class="chip" data-hab="water" aria-pressed="false"><span data-l="vi">Dưới nước</span><span data-l="en">Water</span></button>
+      <button class="chip" data-hab="air" aria-pressed="false"><span data-l="vi">Bay</span><span data-l="en">Flying</span></button>
+    </div>
+    <input id="q" type="search" placeholder="Tìm loài… (vd: rex, trike, bay, nuoc)" aria-label="Tìm loài / Search species">
+    <span class="count" id="count"></span>
+  </div>
+  <div id="list"></div>
+  <footer><span data-l="vi">Thông tin tóm tắt lối chơi phổ biến của cộng đồng; chỉ số và cơ chế thay đổi theo từng bản cập nhật của The Isle. Ảnh là tranh phục dựng từ Wikimedia Commons, ghi tác giả và giấy phép trong hồ sơ từng loài; không phải hình trong game.</span><span data-l="en">A summary of common community playstyles; stats and mechanics change with every update of The Isle. Images are life restorations from Wikimedia Commons, credited with author and licence on each profile; they are not in-game art.</span></footer>
+</main>
+
+<div class="sheet" id="sheet" hidden><div class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="dName"></div></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+// ---------- language ----------
+let lang = "vi";
+try { if (localStorage.getItem("isle-lang") === "en") lang = "en"; } catch {}
+const UI = {
+  vi: {
+    diet: { carn: "Ăn thịt", herb: "Ăn cỏ", omni: "Ăn tạp" },
+    habitat: { land: "Trên cạn", water: "Dưới nước", air: "Bay" },
+    branch: { evrima: "Evrima · bản hiện hành", legacy: "Legacy · bản cũ" },
+    section: { evrima: "BẢN HIỆN HÀNH", legacy: "BẢN CŨ" }, species: "LOÀI", legacyTip: "Loài từ bản Legacy, chưa chơi được trong Evrima",
+    count: (a, b) => `${a} / ${b} loài`, empty: "Không có loài nào khớp. Thử tên khác hoặc bỏ bộ lọc.",
+    placeholder: "Tìm loài… (vd: rex, trike, bay, nuoc)",
+    close: "Đóng ✕", nick: n => `Biệt danh trong cộng đồng: “${n}”`,
+    facts: { diet: "Chế độ ăn", habitat: "Môi trường", tier: "Cỡ", group: "Lối sống" },
+    h: { life: "Cách sống", food: "Thức ăn", tips: "Cách sinh tồn", atk: "Tấn công", def: "Phòng thủ", mut: "Hướng cộng mutation" },
+    mutNote: "Gợi ý theo nhóm hiệu ứng. Trong game, chọn mutation có hiệu ứng này trong danh sách của loài bạn.",
+    alt: n => `Bóng minh hoạ ${n}`,
+    connecting: "Đang kết nối phòng…", solo: "Chế độ xem một mình", soloNoRoom: "Chế độ xem một mình (không kết nối được phòng)",
+    online: n => `${n} người đang xem sổ tay`, you: "Bạn", guest: "Khách", someone: "Một người chơi",
+    joined: n => `${n} vừa vào phòng`, left: n => `${n} đã rời phòng`, cowatch: s => `Cũng đang xem loài này: ${s}`,
+    nickLabel: "Biệt danh của bạn", nickPlaceholder: "Ví dụ: RexHunter", nickSave: "Lưu", nickSaved: "Đã lưu biệt danh"
+  },
+  en: {
+    diet: { carn: "Carnivore", herb: "Herbivore", omni: "Omnivore" },
+    habitat: { land: "Land", water: "Water", air: "Flying" },
+    branch: { evrima: "Evrima · current branch", legacy: "Legacy · old branch" },
+    section: { evrima: "CURRENT BRANCH", legacy: "OLD BRANCH" }, species: "SPECIES", legacyTip: "Legacy species, not yet playable in Evrima",
+    count: (a, b) => `${a} / ${b} species`, empty: "No species match. Try another name or clear the filters.",
+    placeholder: "Search species… (e.g. rex, trike, flying, water)",
+    close: "Close ✕", nick: n => `Community nickname: “${n}”`,
+    facts: { diet: "Diet", habitat: "Habitat", tier: "Size", group: "Social" },
+    h: { life: "Lifestyle", food: "Food", tips: "Survival", atk: "Attack", def: "Defence", mut: "Mutation build" },
+    mutNote: "Suggested by effect type. In game, pick a mutation with this effect from your species' list.",
+    alt: n => `${n} silhouette`,
+    connecting: "Connecting to the room…", solo: "Viewing alone", soloNoRoom: "Viewing alone (could not join the room)",
+    online: n => `${n} ${n === 1 ? "person" : "people"} reading the guide`, you: "You", guest: "Guest", someone: "A player",
+    joined: n => `${n} joined the room`, left: n => `${n} left the room`, cowatch: s => `Also viewing this species: ${s}`,
+    nickLabel: "Your nickname", nickPlaceholder: "e.g. RexHunter", nickSave: "Save", nickSaved: "Nickname saved"
+  }
+};
+const T = () => UI[lang];
+const TIER_EN = { "Apex": "Apex", "Lớn": "Large", "Vừa": "Medium", "Nhỏ": "Small", "Rất nhỏ": "Tiny" };
+const GROUP_EN = { "Đơn độc": "Solitary", "Đơn độc / cặp": "Solitary / pairs", "Đơn độc / nhóm nhỏ": "Solitary / small group", "Nhóm nhỏ": "Small group",
+  "Bầy nhỏ": "Small pack", "Bầy": "Pack", "Đơn độc / đàn": "Solitary / herd", "Đàn": "Herd", "Đơn độc / nhóm": "Solitary / group" };
+// Species not listed here live on land; semi-aquatic hunters count as water.
+const HABITAT_OF = { deino: "water", spino: "water", bary: "water", sucho: "water", ptera: "air", quetz: "air" };
+const habitatOf = d => HABITAT_OF[d.id] || "land";
+
+// plan: theropod | quad | croc | ptero ; opts tweak the silhouette
+const DINOS = [
+  // ---------- Evrima ----------
+  { id: "rex", name: "Tyrannosaurus", nick: "Rex", diet: "carn", branch: "evrima", tier: "Apex", group: "Đơn độc / cặp", plan: "theropod", o: { big: 1 },
+    life: "Kẻ săn mồi lớn nhất Evrima. Con non nhỏ, nhanh và phải lẩn trốn; trưởng thành thì chậm nhưng một cú cắn có thể quyết định trận đấu.",
+    food: "Thịt mọi loài, ưu tiên xác lớn như Trike, Stego, Maiasaura.",
+    tips: ["Lúc nhỏ bám bìa rừng, tránh bãi trống và các bầy raptor.", "Trưởng thành dùng tiếng gầm để định vị mồi rồi phục kích ở bờ nước.", "Đừng đuổi lâu: sức bền thấp, quay đầu chậm."] },
+  { id: "carno", name: "Carnotaurus", nick: "Carno", diet: "carn", branch: "evrima", tier: "Lớn", group: "Đơn độc / nhóm nhỏ", plan: "theropod", o: { horns: 1, slim: 1 },
+    life: "Thợ săn tốc độ cao trên đường thẳng, chạy bền ở bãi trống.",
+    food: "Thịt; mồi vừa như Dryo, Tenonto, Gallimimus.",
+    tips: ["Tận dụng tốc độ trên đồng bằng, tránh rừng rậm vì cua kém.", "Húc ngã mồi rồi kết liễu nhanh.", "Né đối đầu trực diện với Rex và Trike trưởng thành."] },
+  { id: "cerato", name: "Ceratosaurus", nick: "Cerato", diet: "carn", branch: "evrima", tier: "Lớn", group: "Nhóm nhỏ", plan: "theropod", o: { crest: 1 },
+    life: "Thợ săn đa năng, bơi được, hay lảng vảng quanh sông và đầm lầy.",
+    food: "Thịt và cá; có thể ăn xác chết.",
+    tips: ["Vượt sông để cắt đuôi kẻ đuổi.", "Cắn gây chảy máu rồi rút lui, chờ mồi yếu đi.", "Kết hợp nước và cây cối để ẩn mình."] },
+  { id: "deino", name: "Deinosuchus", nick: "Deino", diet: "carn", branch: "evrima", tier: "Apex", group: "Đơn độc", plan: "croc", o: {},
+    life: "Cá sấu khổng lồ, sống gần như hoàn toàn dưới nước, rình ở bến uống nước.",
+    food: "Bất cứ thứ gì xuống uống nước; cá và xác chết.",
+    tips: ["Nằm im dưới nước gần chỗ đông khủng long uống nước.", "Kéo mồi xuống nước, nơi bạn mạnh nhất.", "Trên cạn rất chậm, đừng lên bờ khi có nguy hiểm."] },
+  { id: "dilo", name: "Dilophosaurus", nick: "Dilo", diet: "carn", branch: "evrima", tier: "Vừa", group: "Bầy nhỏ", plan: "theropod", o: { crest: 2, slim: 1 },
+    life: "Thợ săn cỡ vừa, nhanh nhẹn, giỏi bắt cá ở suối.",
+    food: "Cá, động vật nhỏ, xác chết; mồi vừa khi đi bầy.",
+    tips: ["Bắt cá ở suối nông để sống qua giai đoạn nhỏ.", "Đi bầy 2–4 con khi săn Dryo hay Hypsi.", "Rút lui sớm khi gặp kẻ săn mồi lớn."] },
+  { id: "herrera", name: "Herrerasaurus", nick: "Herrera", diet: "carn", branch: "evrima", tier: "Nhỏ", group: "Đơn độc", plan: "theropod", o: { slim: 1, small: 1 },
+    life: "Thợ săn phục kích, biết leo vách và ẩn rất tốt.",
+    food: "Động vật nhỏ, con non, xác chết.",
+    tips: ["Dùng địa hình cao và bụi rậm để phục kích.", "Nhắm con non và loài nhỏ, tránh đánh lâu.", "Trốn lên vách đá khi bị đuổi."] },
+  { id: "omni", name: "Omniraptor", nick: "Omni", diet: "carn", branch: "evrima", tier: "Vừa", group: "Bầy", plan: "theropod", o: { feathers: 1, slim: 1, small: 1 },
+    life: "Raptor đi bầy, nổi tiếng vì vồ lên lưng mồi lớn.",
+    food: "Thịt; đi bầy có thể hạ cả mồi lớn.",
+    tips: ["Săn theo bầy; một mình rất dễ chết.", "Vồ lên lưng rồi cắn liên tục, nhảy ra khi mồi lăn.", "Đừng tham chiến với Rex hay Stego trưởng thành."] },
+  { id: "ptera", name: "Pteranodon", nick: "Ptera", diet: "carn", branch: "evrima", tier: "Nhỏ", group: "Đơn độc / đàn", plan: "ptero", o: {},
+    life: "Bò sát bay, do thám bản đồ từ trên cao và đậu nghỉ trên vách.",
+    food: "Cá là chính; xác chết nhỏ.",
+    tips: ["Quản lý sức bền khi bay, đậu nơi cao để hồi.", "Bắt cá ở biển và hồ lớn.", "Hạ cánh xa khu đông thợ săn: dưới đất bạn rất yếu."] },
+  { id: "troodon", name: "Troodon", nick: "Troodon", diet: "carn", branch: "evrima", tier: "Nhỏ", group: "Bầy", plan: "theropod", o: { feathers: 1, slim: 1, small: 1 },
+    life: "Thợ săn đêm, cú cắn có nọc độc khiến mồi suy yếu.",
+    food: "Con non, trứng, động vật nhỏ, xác chết.",
+    tips: ["Hoạt động mạnh nhất vào ban đêm.", "Cắn trúng độc rồi bám theo, chờ mồi gục.", "Ẩn trong rừng rậm ban ngày."] },
+  { id: "beipi", name: "Beipiaosaurus", nick: "Beipi", diet: "omni", branch: "evrima", tier: "Nhỏ", group: "Đơn độc", plan: "theropod", o: { feathers: 1, claws: 1, small: 1 },
+    life: "Loài nhỏ phủ lông, đào bới và trốn trong hang.",
+    food: "Thực vật, côn trùng và thịt nhỏ.",
+    tips: ["Đào hang để nghỉ và trốn an toàn.", "Ăn tạp nên dễ tìm thức ăn ở mọi vùng.", "Móng vuốt chỉ để tự vệ, đừng chủ động gây chiến."] },
+  { id: "galli", name: "Gallimimus", nick: "Galli", diet: "omni", branch: "evrima", tier: "Vừa", group: "Đàn", plan: "theropod", o: { mimid: 1 },
+    life: "Loài chạy nhanh bậc nhất đảo, sống thành đàn ở đồng trống.",
+    food: "Thực vật, trái cây, động vật nhỏ, trứng.",
+    tips: ["Tốc độ là vũ khí duy nhất: luôn có đường chạy.", "Đi đàn để nhiều mắt canh chừng.", "Đá chỉ để tạo khoảng cách, không để thắng."] },
+  { id: "diablo", name: "Diabloceratops", nick: "Diablo", diet: "herb", branch: "evrima", tier: "Vừa", group: "Đàn", plan: "quad", o: { frill: 2 },
+    life: "Khủng long sừng cỡ vừa, sống theo đàn, sẵn sàng húc trả.",
+    food: "Cây bụi, dương xỉ, cỏ thấp.",
+    tips: ["Đứng thành vòng, mặt hướng ra ngoài khi bị vây.", "Húc ngã raptor rồi lùi lại.", "Đừng tách đàn ở bãi trống."] },
+  { id: "dryo", name: "Dryosaurus", nick: "Dryo", diet: "herb", branch: "evrima", tier: "Nhỏ", group: "Đàn", plan: "theropod", o: { herbi: 1, small: 1 },
+    life: "Loài ăn cỏ nhỏ, nhanh, là mồi phổ biến của hầu hết thợ săn.",
+    food: "Thực vật thấp, trái cây.",
+    tips: ["Nghe kỹ tiếng động lạ trước khi ra bãi ăn.", "Chạy zig-zag qua cây để cắt đuôi.", "Ngủ ở chỗ kín, gần đàn."] },
+  { id: "hypsi", name: "Hypsilophodon", nick: "Hypsi", diet: "herb", branch: "evrima", tier: "Rất nhỏ", group: "Đàn", plan: "theropod", o: { herbi: 1, small: 2 },
+    life: "Loài nhỏ nhất, sống lén lút, đào hang và trốn trong bụi.",
+    food: "Thực vật, trái cây, hạt.",
+    tips: ["Trốn trong hang khi thấy kẻ săn.", "Đi theo đàn lớn để hưởng sự che chở.", "Đừng đứng yên giữa bãi trống."] },
+  { id: "maia", name: "Maiasaura", nick: "Maia", diet: "herb", branch: "evrima", tier: "Lớn", group: "Đàn", plan: "quad", o: { hadro: 1 },
+    life: "Khủng long mỏ vịt sống đàn, chăm sóc tổ trứng và con non.",
+    food: "Lá, cây bụi, cỏ.",
+    tips: ["Gọi đàn để cả nhóm cùng chống trả.", "Bảo vệ tổ: nơi tụ tập dễ thu hút thợ săn.", "Đá hậu khá mạnh, dùng khi bị vồ."] },
+  { id: "pachy", name: "Pachycephalosaurus", nick: "Pachy", diet: "herb", branch: "evrima", tier: "Vừa", group: "Đơn độc / đàn", plan: "theropod", o: { herbi: 1, dome: 1 },
+    life: "Đầu vòm dày, chuyên lao húc làm choáng đối thủ.",
+    food: "Thực vật thấp, trái cây.",
+    tips: ["Lấy đà rồi húc, sau đó lùi ra.", "Húc raptor đang vồ đồng đội.", "Không đủ trâu để đỡ đòn của thợ săn lớn."] },
+  { id: "stego", name: "Stegosaurus", nick: "Stego", diet: "herb", branch: "evrima", tier: "Lớn", group: "Đơn độc / nhóm", plan: "quad", o: { plates: 1 },
+    life: "Phiến lưng và đuôi gai; chậm nhưng cực nguy hiểm khi bị áp sát.",
+    food: "Cây bụi thấp, dương xỉ.",
+    tips: ["Quay đuôi về phía kẻ tấn công.", "Đứng sát tường hoặc cây để che bên sườn.", "Cú quất đuôi gây chảy máu nặng, đừng để bị vây trước mặt."] },
+  { id: "tenonto", name: "Tenontosaurus", nick: "Tenonto", diet: "herb", branch: "evrima", tier: "Vừa", group: "Đàn", plan: "quad", o: { longtail: 1 },
+    life: "Loài ăn cỏ cỡ vừa, đuôi dài, sống đàn ở rìa rừng.",
+    food: "Lá, cây bụi.",
+    tips: ["Đi đàn và luân phiên canh gác.", "Quất đuôi để đẩy lùi thợ săn nhỏ.", "Chạy vào rừng khi gặp Carno."] },
+  { id: "trike", name: "Triceratops", nick: "Trike", diet: "herb", branch: "evrima", tier: "Apex", group: "Đơn độc / đàn", plan: "quad", o: { frill: 3, big: 1 },
+    life: "Loài ăn cỏ trâu nhất, trưởng thành có thể đối đầu cả Rex.",
+    food: "Cây bụi, dương xỉ, cỏ.",
+    tips: ["Giữ mặt hướng về kẻ địch, sừng là khiên và giáo.", "Húc rồi xoay người, đừng để bị đánh vào sườn.", "Lúc nhỏ rất yếu: bám theo người lớn."] },
+  // ---------- Legacy ----------
+  { id: "giga", name: "Giganotosaurus", nick: "Giga", diet: "carn", branch: "legacy", tier: "Apex", group: "Đơn độc", plan: "theropod", o: { big: 1, slim: 1 },
+    life: "Kẻ săn mồi to nhất bản Legacy, sải bước dài, cú cắn gây sát thương cực lớn.",
+    food: "Thịt mọi loài lớn.",
+    tips: ["Đi tuần các bãi nước lớn.", "Tận dụng sải bước để đuổi trên đường dài.", "Cẩn thận bầy Utahraptor."] },
+  { id: "spino", name: "Spinosaurus", nick: "Spino", diet: "carn", branch: "legacy", tier: "Apex", group: "Đơn độc", plan: "theropod", o: { sail: 1, big: 1 },
+    life: "Thợ săn bán thuỷ sinh với cánh buồm trên lưng, mạnh nhất dưới nước.",
+    food: "Cá lớn, mồi sát bờ nước.",
+    tips: ["Chiến đấu trong nước để chiếm lợi thế.", "Trên cạn chậm, tránh chạy đuổi xa.", "Lặn để thoát khỏi thợ săn trên bờ."] },
+  { id: "acro", name: "Acrocanthosaurus", nick: "Acro", diet: "carn", branch: "legacy", tier: "Lớn", group: "Đơn độc", plan: "theropod", o: { ridge: 1 },
+    life: "Thợ săn lớn với gờ lưng, cân bằng giữa sức mạnh và tốc độ.",
+    food: "Thịt; mồi vừa và lớn.",
+    tips: ["Rình ở bìa rừng, đánh nhanh.", "Tránh đàn Trike đông.", "Ăn xác để tiết kiệm sức."] },
+  { id: "albert", name: "Albertosaurus", nick: "Albert", diet: "carn", branch: "legacy", tier: "Lớn", group: "Bầy", plan: "theropod", o: { slim: 1 },
+    life: "Họ hàng nhỏ của Rex, nhanh và quen săn theo bầy.",
+    food: "Thịt; mồi vừa.",
+    tips: ["Đi bầy 2–3 con để hạ mồi lớn.", "Dùng tốc độ thay vì đối đầu.", "Tránh Giga và Rex."] },
+  { id: "allo", name: "Allosaurus", nick: "Allo", diet: "carn", branch: "evrima", tier: "Lớn", group: "Bầy nhỏ", plan: "theropod", o: { crest: 1 },
+    life: "Thợ săn lớn hiếu chiến, mạnh khi đi theo cặp.",
+    food: "Thịt; mồi vừa và lớn.",
+    tips: ["Cắn rồi lùi để mồi chảy máu.", "Phối hợp với đồng đội để vây.", "Bảo toàn sức bền trước khi giao chiến."] },
+  { id: "bary", name: "Baryonyx", nick: "Bary", diet: "carn", branch: "legacy", tier: "Vừa", group: "Đơn độc", plan: "theropod", o: { slim: 1, claws: 1 },
+    life: "Thợ săn bán thuỷ sinh mõm dài, giỏi bơi.",
+    food: "Cá, mồi vừa gần nước.",
+    tips: ["Bắt cá để sống ổn định.", "Lặn xuống nước khi bị đuổi.", "Phục kích mồi đi uống nước."] },
+  { id: "sucho", name: "Suchomimus", nick: "Sucho", diet: "carn", branch: "legacy", tier: "Lớn", group: "Đơn độc", plan: "theropod", o: { ridge: 1, claws: 1 },
+    life: "Họ hàng Spino, sống ven sông, cân bằng giữa cạn và nước.",
+    food: "Cá, mồi ven sông.",
+    tips: ["Bám theo dòng sông lớn.", "Đánh ở vùng nước nông.", "Tránh Spino trưởng thành."] },
+  { id: "utah", name: "Utahraptor", nick: "Utah", diet: "carn", branch: "legacy", tier: "Vừa", group: "Bầy", plan: "theropod", o: { feathers: 1, slim: 1 },
+    life: "Raptor lớn, hung dữ, ghim mồi bằng móng chân.",
+    food: "Thịt; đi bầy hạ cả mồi lớn.",
+    tips: ["Vồ và ghim mồi, đồng đội cắn tiếp.", "Một mình thì chỉ nên săn mồi nhỏ.", "Lánh xa Giga."] },
+  { id: "austro", name: "Austroraptor", nick: "Austro", diet: "carn", branch: "legacy", tier: "Nhỏ", group: "Bầy", plan: "theropod", o: { feathers: 1, slim: 1, small: 1 },
+    life: "Raptor mõm dài, nhanh, hay bắt cá.",
+    food: "Cá, động vật nhỏ.",
+    tips: ["Săn cá ở suối khi còn nhỏ.", "Chạy nhanh để thoát thân.", "Theo bầy khi săn mồi vừa."] },
+  { id: "puerta", name: "Puertasaurus", nick: "Puerta", diet: "herb", branch: "legacy", tier: "Apex", group: "Đơn độc / đàn", plan: "quad", o: { longneck: 1, big: 1 },
+    life: "Sauropod khổng lồ, gần như không gì hạ được khi trưởng thành.",
+    food: "Lá cây cao.",
+    tips: ["Dẫm và quất đuôi khi bị vây.", "Lúc nhỏ rất dễ bị săn, phải trốn kỹ.", "Chậm, nên tính đường đi đến nước từ sớm."] },
+  { id: "cama", name: "Camarasaurus", nick: "Cama", diet: "herb", branch: "legacy", tier: "Lớn", group: "Đàn", plan: "quad", o: { longneck: 1 },
+    life: "Sauropod cỡ vừa, sống đàn, ăn lá trên cao.",
+    food: "Lá cây cao.",
+    tips: ["Đi đàn để tự vệ.", "Dẫm lên kẻ tấn công nhỏ.", "Tránh tách đàn khi còn non."] },
+  { id: "shant", name: "Shantungosaurus", nick: "Shant", diet: "herb", branch: "legacy", tier: "Apex", group: "Đàn", plan: "quad", o: { hadro: 1, big: 1 },
+    life: "Khủng long mỏ vịt khổng lồ, to xác và trâu.",
+    food: "Lá, cây bụi, cỏ.",
+    tips: ["Dựa vào thân hình để chịu đòn.", "Đi theo đàn qua đồng trống.", "Đá hậu khi bị bám đuôi."] },
+  { id: "theri", name: "Therizinosaurus", nick: "Theri", diet: "herb", branch: "legacy", tier: "Lớn", group: "Đơn độc", plan: "theropod", o: { claws: 2, mimid: 1, feathers: 1 },
+    life: "Ăn cỏ hai chân với móng vuốt dài như lưỡi hái.",
+    food: "Lá cây, cây bụi.",
+    tips: ["Quạt móng gây chảy máu cho kẻ áp sát.", "Đứng ở nơi cây thưa để vung móng.", "Không chạy nhanh, đừng để bị đuổi lâu."] },
+  { id: "para", name: "Parasaurolophus", nick: "Para", diet: "herb", branch: "legacy", tier: "Vừa", group: "Đàn", plan: "quad", o: { hadro: 2 },
+    life: "Mỏ vịt có mào ống, kêu to để gọi đàn.",
+    food: "Lá, cây bụi.",
+    tips: ["Dùng tiếng gọi để báo động cả đàn.", "Chạy hai chân khi cần tốc độ.", "Đi đàn qua vùng nguy hiểm."] },
+  { id: "velo", name: "Velociraptor", nick: "Velo", diet: "carn", branch: "legacy", tier: "Rất nhỏ", group: "Bầy", plan: "theropod", o: { feathers: 1, slim: 1, small: 2 },
+    life: "Raptor nhỏ phủ lông, rất nhanh, sống nhờ đi bầy và lẩn trốn.",
+    food: "Động vật nhỏ, con non, xác chết.",
+    tips: ["Đi bầy đông để săn mồi lớn hơn mình.", "Dùng tốc độ và bụi rậm để thoát.", "Tránh xa mọi thợ săn cỡ vừa trở lên."] },
+  { id: "quetz", name: "Quetzalcoatlus", nick: "Quetz", diet: "carn", branch: "legacy", tier: "Lớn", group: "Đơn độc", plan: "ptero", o: {},
+    life: "Thằn lằn bay khổng lồ, bay xa và đi bằng bốn chi trên mặt đất.",
+    food: "Cá, động vật nhỏ, xác chết.",
+    tips: ["Bay cao để tìm thức ăn và nước.", "Đáp xuống bãi trống để có chỗ cất cánh lại.", "Dưới đất chậm, đừng ở lâu gần thợ săn."] },
+  { id: "ava", name: "Avaceratops", nick: "Ava", diet: "herb", branch: "legacy", tier: "Nhỏ", group: "Đàn", plan: "quad", o: { frill: 1, small: 1 },
+    life: "Khủng long sừng nhỏ, nhanh hơn Trike nhưng yếu hơn.",
+    food: "Cây bụi thấp.",
+    tips: ["Húc đuổi thợ săn nhỏ.", "Bám theo đàn Trike để được che chở.", "Chạy khi gặp thợ săn lớn."] }
+];
+
+// Attack / defence tips per species (Vietnamese)
+const COMBAT = {
+  rex:     { atk: ["Cú cắn nặng nhất game, gây chảy máu và gãy xương.", "Gầm để định vị rồi áp sát từ hướng khuất gió."], def: ["Máu rất dày nhưng quay chậm: giữ địch trước mặt.", "Bị bầy nhỏ vây thì lùi sát vách để che đuôi."], mut: ["regen", "bone", "stamMax"] },
+  carno:   { atk: ["Húc đầu bằng sừng làm mồi loạng choạng, sau đó cắn.", "Đánh lướt khi đang chạy, không đứng lại đấu."], def: ["Dựa vào tốc độ trên đồng trống.", "Cua kém: thoát theo đường thẳng, tránh rừng."], mut: ["speed", "stamMax", "stam"] },
+  cerato:  { atk: ["Cắn gây chảy máu mạnh rồi rút.", "Phục kích từ dưới nước hoặc bụi rậm."], def: ["Lặn xuống sông khi bị đuổi.", "Dùng nước để cắt dấu."], mut: ["bleed", "water", "regen"] },
+  deino:   { atk: ["Đớp và giữ chặt mồi ở mép nước.", "Kéo mồi xuống nước để kết liễu."], def: ["Ở dưới nước gần như bất khả xâm phạm.", "Trên cạn rất yếu: không lên bờ khi có nguy hiểm."], mut: ["water", "hunger", "regen"] },
+  dilo:    { atk: ["Cắn nhanh, liên tục khi đi bầy.", "Bắt cá để no mà không cần đánh nhau."], def: ["Chạy sớm, không đỡ đòn được lâu.", "Bám địa hình rậm và suối."], mut: ["stam", "hunger", "speed"] },
+  herrera: { atk: ["Phục kích từ trên cao và cắn nhanh rồi lùi.", "Nhắm con non và loài nhỏ."], def: ["Leo vách để thoát.", "Ẩn trong bụi, đứng im khi có kẻ đi ngang."], mut: ["jump", "stam", "sense"] },
+  omni:    { atk: ["Vồ lên lưng (pounce) và cắn liên tục.", "Cả bầy cùng vồ một mục tiêu."], def: ["Nhảy khỏi lưng khi mồi lăn hoặc quất đuôi.", "Một mình thì chạy, đừng đỡ."], mut: ["jump", "stam", "regen"] },
+  ptera:   { atk: ["Sà xuống bắt cá rồi bay lên.", "Chỉ tấn công sinh vật rất nhỏ."], def: ["Cất cánh ngay khi bị áp sát.", "Đậu nghỉ nơi cao, xa đường mòn."], mut: ["stamMax", "stam", "hunger"] },
+  troodon: { atk: ["Cắn có độc, mồi suy yếu dần theo thời gian.", "Đánh ban đêm, bám theo chờ mồi gục."], def: ["Ẩn trong rừng rậm.", "Chạy theo bầy, tản ra khi bị đuổi."], mut: ["night", "stam", "sense"] },
+  beipi:   { atk: ["Vuốt cào để tự vệ, không phải để săn.", "Ăn xác và côn trùng là chính."], def: ["Chui vào hang đã đào.", "Trốn trong bụi, tránh lộ diện."], mut: ["hunger", "thirst", "regen"] },
+  galli:   { atk: ["Đá khi bị dồn, đủ tạo khoảng cách.", "Ăn trứng và động vật nhỏ khi có cơ hội."], def: ["Tốc độ là phòng thủ chính.", "Giữ sức bền luôn đầy trước khi ra bãi trống."], mut: ["speed", "stamMax", "stam"] },
+  diablo:  { atk: ["Húc sừng làm ngã và gây chảy máu.", "Húc rồi lùi, chờ đồng đội cùng ra đòn."], def: ["Mặt hướng về kẻ địch, che sườn bằng đàn.", "Đứng sát nhau thành vòng."], mut: ["bleedRes", "regen", "stamMax"] },
+  dryo:    { atk: ["Gần như không có đòn đáng kể.", "Đá nhẹ chỉ để thoát khỏi vồ."], def: ["Chạy zig-zag qua cây.", "Nghe tiếng động và chạy trước khi bị thấy."], mut: ["speed", "stam", "sense"] },
+  hypsi:   { atk: ["Không có khả năng chiến đấu.", "Cắn nhẹ chỉ để gỡ khi bị tóm."], def: ["Chui hang, trốn bụi.", "Nhỏ và lẹ: lách qua khe kẻ lớn không vào được."], mut: ["speed", "hunger", "sense"] },
+  maia:    { atk: ["Đá hậu mạnh vào kẻ bám phía sau.", "Cả đàn cùng đá khi bị tấn công tổ."], def: ["Gọi đàn để tụ lại.", "Giữ con non ở giữa đàn."], mut: ["regen", "bone", "stamMax"] },
+  pachy:   { atk: ["Lấy đà húc đầu làm choáng đối thủ.", "Húc kẻ đang vồ đồng đội cho rơi xuống."], def: ["Húc rồi chạy, không đứng đấu lâu.", "Tránh thợ săn lớn hơn mình."], mut: ["speed", "stam", "regen"] },
+  stego:   { atk: ["Quất đuôi gai gây chảy máu nặng.", "Xoay người để luôn có góc quất đuôi."], def: ["Quay đuôi về phía kẻ địch.", "Đứng sát vách hoặc cây để không bị đánh sườn."], mut: ["bleedRes", "regen", "bone"] },
+  tenonto: { atk: ["Quất đuôi dài đẩy lùi thợ săn nhỏ.", "Đá khi bị vồ lên lưng."], def: ["Đi đàn, luân phiên canh gác.", "Chạy vào rừng khi gặp kẻ săn nhanh."], mut: ["stamMax", "regen", "speed"] },
+  trike:   { atk: ["Húc sừng gây chảy máu và gãy xương.", "Húc mạnh đủ đối đầu Rex trưởng thành."], def: ["Diềm cổ che phía trước: luôn đối mặt địch.", "Xoay kịp để không bị cắn sườn."], mut: ["regen", "bleedRes", "bone"] },
+  giga:    { atk: ["Cú cắn sát thương cực lớn.", "Đuổi bằng sải bước dài."], def: ["Máu dày, nhưng sợ bị bầy raptor bám.", "Lắc để hất raptor khỏi lưng."], mut: ["regen", "stamMax", "bone"] },
+  spino:   { atk: ["Cắn và vuốt mạnh khi ở dưới nước.", "Phục kích sát bờ."], def: ["Lặn xuống nước để thoát.", "Tránh đấu trên cạn khô."], mut: ["water", "regen", "hunger"] },
+  acro:    { atk: ["Cắn mạnh, nhanh hơn các thợ săn lớn khác.", "Đánh rồi lùi khỏi tầm sừng."], def: ["Rút vào rừng khi gặp đàn sừng.", "Giữ sức bền để thoát."], mut: ["stam", "regen", "dmg"] },
+  albert:  { atk: ["Cắn liên tục khi đi bầy.", "Đuổi bằng tốc độ."], def: ["Chạy khi gặp Apex.", "Bầy che chắn cho nhau."], mut: ["speed", "stam", "regen"] },
+  allo:    { atk: ["Cắn gây chảy máu rồi lùi.", "Vây mồi theo cặp."], def: ["Không đối đầu Apex trực diện.", "Rút khi máu dưới nửa."], mut: ["bleed", "stam", "regen"] },
+  bary:    { atk: ["Vuốt và cắn ở vùng nước nông.", "Bắt cá để no."], def: ["Lặn xuống nước.", "Bám theo sông để có đường thoát."], mut: ["water", "hunger", "regen"] },
+  sucho:   { atk: ["Vuốt lớn gây chảy máu.", "Đánh ở bờ sông."], def: ["Lặn để thoát.", "Né Spino trưởng thành."], mut: ["water", "bleed", "regen"] },
+  utah:    { atk: ["Vồ và ghim mồi bằng móng chân.", "Cả bầy cùng ghim một mục tiêu."], def: ["Nhảy khỏi mồi trước khi bị lăn đè.", "Tản ra khi gặp Apex."], mut: ["jump", "stam", "regen"] },
+  austro:  { atk: ["Cắn nhanh, bắt cá.", "Đi bầy để săn mồi vừa."], def: ["Tốc độ là phòng thủ chính.", "Trốn trong rừng rậm."], mut: ["speed", "stam", "hunger"] },
+  puerta:  { atk: ["Dẫm và quất đuôi gây sát thương lớn.", "Đè kẻ đứng dưới chân."], def: ["Máu cực dày khi trưởng thành.", "Lúc nhỏ phải trốn kỹ trong rừng."], mut: ["thirst", "regen", "bone"] },
+  cama:    { atk: ["Dẫm và quất đuôi.", "Cả đàn cùng dẫm."], def: ["Đi đàn, không tách lẻ.", "Đứng ở chỗ trống để có chỗ xoay."], mut: ["thirst", "regen", "bleedRes"] },
+  shant:   { atk: ["Đá hậu và dẫm.", "Dùng thân hình đẩy lùi kẻ địch."], def: ["Chịu đòn tốt nhờ to xác.", "Đi đàn qua đồng trống."], mut: ["regen", "bone", "stamMax"] },
+  theri:   { atk: ["Quạt móng dài gây chảy máu nặng.", "Giữ địch ở tầm móng."], def: ["Đứng ở chỗ thoáng để vung móng.", "Không chạy xa được, chọn chỗ đứng đấu."], mut: ["bleed", "regen", "bleedRes"] },
+  para:    { atk: ["Đá khi bị bám.", "Không có đòn mạnh."], def: ["Gọi đàn báo động.", "Chạy hai chân khi cần tốc độ."], mut: ["speed", "stamMax", "sense"] },
+  ava:     { atk: ["Húc sừng nhỏ.", "Húc đuổi thợ săn nhỏ."], def: ["Bám theo đàn sừng lớn.", "Chạy khi gặp kẻ săn lớn."], mut: ["speed", "regen", "stam"] },
+  velo:    { atk: ["Vồ và cắn nhanh, cả bầy cùng lao vào.", "Nhắm con non và loài nhỏ."], def: ["Chạy và lách qua bụi rậm.", "Tản ra khi bị đuổi."] },
+  quetz:   { atk: ["Mổ mạnh vào sinh vật nhỏ.", "Sà xuống bắt cá."], def: ["Cất cánh ngay khi bị áp sát.", "Nghỉ ở nơi cao và trống."] }
+};
+
+// Evrima mutations by their in-game names. Effects follow community guides and may change with patches.
+const MUT = {
+  cellReg:   { n: "Cellular Regeneration",          vi: "Hồi máu nhanh hơn ~15%",                         en: "~15% faster health regen" },
+  hypoalg:   { n: "Congenital Hypoalgesia",         vi: "Nhận ít sát thương hơn ~15% từ loài to hơn",        en: "~15% less damage from larger species" },
+  effDig:    { n: "Efficient Digestion",            vi: "Đói chậm hơn ~20%",                              en: "Food drains ~20% slower" },
+  epiFib:    { n: "Epidermal Fibrosis",             vi: "Kháng chảy máu thêm ~15%",                        en: "~15% more bleed resistance" },
+  feather:   { n: "Featherweight",                  vi: "Dấu chân biến mất nhanh hơn ~50%",                en: "Footprints fade ~50% faster" },
+  hydroDyn:  { n: "Hydrodynamic",                   vi: "Bơi nhanh hơn ~15%",                              en: "~15% faster swimming" },
+  inspir:    { n: "Increased Inspiratory Capacity", vi: "Tăng ~15% lượng oxy khi lặn",                     en: "~15% more oxygen when diving" },
+  nocturnal: { n: "Nocturnal",                      vi: "Hồi máu và di chuyển tốt hơn ban đêm",             en: "Better healing and movement at night" },
+  osteo:     { n: "Osteosclerosis",                 vi: "~20% cơ hội chống hoặc giảm gãy xương",            en: "~20% chance to resist or reduce fractures" },
+  sustHyd:   { n: "Sustained Hydration",            vi: "Khát chậm hơn ~20%",                              en: "Thirst drains ~20% slower" },
+  subOpt:    { n: "Submerged Optical Retention",    vi: "Nhìn xa hơn dưới nước",                            en: "Longer underwater vision" },
+  preyDrive: { n: "Accelerated Prey Drive",         vi: "+~10% sát thương lên con mồi yếu máu",             en: "+~10% damage to low-health prey" },
+  hemato:    { n: "Hematophagy",                    vi: "Ăn xác hồi lại một phần cơn khát",                 en: "Eating corpses restores some thirst" },
+  hemomania: { n: "Hemomania",                      vi: "+~5% sát thương lên mục tiêu đang chảy máu",        en: "+~5% damage to bleeding targets" },
+  vigil:     { n: "Hypervigilance",                 vi: "Góc nhìn rộng hơn khi ăn uống, nghe tiếng chân rõ hơn", en: "Wider view while eating, louder footsteps" },
+  photoReg:  { n: "Photosynthetic Regeneration",    vi: "Hồi thể lực nhanh hơn ~10% ban ngày",              en: "~10% faster stamina regen by day" },
+  trucul:    { n: "Truculency",                     vi: "Dễ hất kẻ bám trên lưng hơn khi giãy",              en: "Easier to buck off latched attackers" },
+  tapetum:   { n: "Augmented Tapetum",              vi: "Nhìn đêm tốt hơn (mở khoá bằng nhiệm vụ)",         en: "Better night vision (task unlock)" },
+  tendons:   { n: "Reinforced Tendons",             vi: "Nhảy tốn ít thể lực hơn (mở khoá bằng nhiệm vụ)",  en: "Cheaper jumps (task unlock)" },
+  lungs:     { n: "Multichambered Lungs",           vi: "Thể lực bắt đầu hồi sớm hơn (mở khoá bằng nhiệm vụ)", en: "Stamina starts regenerating sooner (task unlock)" }
+};
+// Suggested picks for slot 1 → 3 (Evrima only; Legacy has no mutation system)
+const BUILD = {
+  rex: ["cellReg", "osteo", "hemomania"], carno: ["preyDrive", "lungs", "cellReg"], cerato: ["hemomania", "hydroDyn", "cellReg"],
+  deino: ["inspir", "subOpt", "hemato"], dilo: ["effDig", "preyDrive", "lungs"], herrera: ["tendons", "feather", "nocturnal"],
+  omni: ["tendons", "hypoalg", "hemomania"], ptera: ["effDig", "sustHyd", "lungs"], troodon: ["tapetum", "nocturnal", "hemomania"],
+  allo: ["hemomania", "preyDrive", "cellReg"], beipi: ["effDig", "sustHyd", "cellReg"], galli: ["feather", "lungs", "effDig"],
+  diablo: ["hypoalg", "epiFib", "trucul"], dryo: ["vigil", "feather", "photoReg"], hypsi: ["vigil", "feather", "effDig"],
+  maia: ["trucul", "cellReg", "hypoalg"], pachy: ["photoReg", "hypoalg", "cellReg"], stego: ["epiFib", "hypoalg", "osteo"],
+  tenonto: ["trucul", "photoReg", "cellReg"], trike: ["hypoalg", "epiFib", "cellReg"]
+};
+// Default PC keys. Keys marked sure: false are common defaults not confirmed by a source.
+const KEYS = [
+  { k: ["Chuột trái"], ke: ["Left click"], vi: "Đòn chính (cắn / húc / quất)", en: "Primary attack (bite / ram / swipe)", sure: false },
+  { k: ["Chuột phải"], ke: ["Right click"], vi: "Đòn phụ", en: "Secondary attack", sure: false },
+  { k: ["Shift"], vi: "Giữ để chạy nhanh", en: "Hold to sprint", sure: false },
+  { k: ["Space"], vi: "Nhảy", en: "Jump", sure: false },
+  { k: ["Z"], vi: "Bật/tắt chạy nước kiệu (đỡ tốn sức)", en: "Toggle trot (saves stamina)", sure: true },
+  { k: ["C"], vi: "Cúi người (khó bị phát hiện)", en: "Crouch (harder to spot)", sure: true },
+  { k: ["Q"], kh: true, vi: "Giữ để đánh hơi, tìm mồi và xác", en: "Hold to sniff for prey and carcasses", sure: true },
+  { k: ["E"], vi: "Ăn, uống, đặt trứng", en: "Eat, drink, lay eggs", sure: true },
+  { k: ["F"], vi: "Gầm / gọi thường", en: "Normal call", sure: true },
+  { k: ["1"], vi: "Gọi phát sóng (gọi đàn từ xa)", en: "Broadcast call", sure: true },
+  { k: ["2"], vi: "Gọi thân thiện", en: "Friendly call", sure: true },
+  { k: ["3"], vi: "Gọi đe doạ (doạ kẻ địch)", en: "Threat call", sure: true },
+  { k: ["N"], kh: true, vi: "Giữ để tán tỉnh, ghép đôi", en: "Hold to court a mate", sure: true }
+];
+
+// English text per species: life, food, tips[], atk[], def[]
+const EN = {
+  rex: { life: "The biggest predator in Evrima. Juveniles are small, fast and must hide; adults are slow, but one bite can decide a fight.", food: "Any meat, preferably big carcasses like Trike, Stego and Maiasaura.",
+    tips: ["As a juvenile, stay at forest edges and avoid open fields and raptor packs.", "As an adult, roar to locate prey, then ambush at the water's edge.", "Don't chase for long: low stamina and slow turning."],
+    atk: ["Heaviest bite in the game, causing bleeding and broken bones.", "Roar to locate, then close in from downwind."], def: ["Huge health but slow turning: keep enemies in front.", "When swarmed by small packs, back against a cliff to protect your tail."] },
+  carno: { life: "A high-speed hunter on straight lines, with great endurance in open terrain.", food: "Meat; mid-size prey like Dryo, Tenonto and Gallimimus.",
+    tips: ["Use your speed on the plains; avoid dense forest because you turn poorly.", "Headbutt prey down, then finish quickly.", "Avoid head-on fights with adult Rex and Trike."],
+    atk: ["Horn headbutt staggers prey, then bite.", "Hit while running; don't stop to brawl."], def: ["Rely on speed in the open.", "Poor turning: escape in a straight line, avoid forests."] },
+  cerato: { life: "A versatile hunter that swims well and patrols rivers and swamps.", food: "Meat and fish; will scavenge carcasses.",
+    tips: ["Cross rivers to lose pursuers.", "Bite to cause bleeding, then back off until prey weakens.", "Combine water and trees to stay hidden."],
+    atk: ["Strong bleeding bite, then retreat.", "Ambush from water or thick brush."], def: ["Dive into the river when chased.", "Use water to break your trail."] },
+  deino: { life: "A giant crocodile that lives almost entirely in water, lurking at drinking spots.", food: "Anything that comes to drink; fish and carcasses.",
+    tips: ["Lie still underwater near busy drinking spots.", "Drag prey into the water, where you are strongest.", "Very slow on land: don't go ashore when there's danger."],
+    atk: ["Snap and hold prey at the water's edge.", "Drag prey underwater to finish it."], def: ["Nearly untouchable in water.", "Very weak on land: stay in the water when threatened."] },
+  dilo: { life: "A nimble mid-size hunter that is good at fishing in streams.", food: "Fish, small animals, carcasses; mid-size prey when in a pack.",
+    tips: ["Fish in shallow streams to survive while small.", "Hunt Dryo or Hypsi in packs of 2–4.", "Retreat early from big predators."],
+    atk: ["Fast, repeated bites in a pack.", "Fish to stay fed without fighting."], def: ["Run early; you can't tank hits for long.", "Stick to thick terrain and streams."] },
+  herrera: { life: "An ambush hunter that climbs cliffs and hides very well.", food: "Small animals, juveniles, carcasses.",
+    tips: ["Use high ground and brush to ambush.", "Target juveniles and small species; avoid long fights.", "Escape up cliffs when chased."],
+    atk: ["Ambush from above, bite fast and retreat.", "Target juveniles and small species."], def: ["Climb cliffs to escape.", "Hide in brush and stay still when something passes."] },
+  omni: { life: "A pack raptor famous for pouncing onto the backs of large prey.", food: "Meat; a pack can take down large prey.",
+    tips: ["Hunt as a pack; alone you die easily.", "Pounce on the back and keep biting; jump off when prey rolls.", "Don't fight adult Rex or Stego."],
+    atk: ["Pounce onto the back and bite repeatedly.", "The whole pack pounces on one target."], def: ["Jump off when prey rolls or tail-whips.", "Alone, run instead of tanking."] },
+  ptera: { life: "A flying reptile that scouts the map from above and rests on cliffs.", food: "Mostly fish; small carcasses.",
+    tips: ["Manage stamina while flying; perch high to recover.", "Catch fish at the sea and big lakes.", "Land far from busy hunting areas: you're very weak on the ground."],
+    atk: ["Swoop down to catch fish, then fly back up.", "Only attack very small creatures."], def: ["Take off the moment something gets close.", "Rest on high ground away from trails."] },
+  troodon: { life: "A night hunter whose venomous bite weakens prey.", food: "Juveniles, eggs, small animals, carcasses.",
+    tips: ["Most active at night.", "Land a venomous bite, then follow until prey collapses.", "Hide in dense forest during the day."],
+    atk: ["Venomous bite that weakens prey over time.", "Strike at night and follow until prey drops."], def: ["Hide in dense forest.", "Run as a pack and scatter when chased."] },
+  beipi: { life: "A small feathered species that digs and hides in burrows.", food: "Plants, insects and small meat.",
+    tips: ["Dig burrows to rest and hide safely.", "As an omnivore, food is easy to find anywhere.", "Claws are for defence; don't start fights."],
+    atk: ["Claw swipes for defence, not hunting.", "Eat carcasses and insects mainly."], def: ["Hide in a burrow you dug.", "Stay in brush and out of sight."] },
+  galli: { life: "One of the fastest species on the island, living in herds in open fields.", food: "Plants, fruit, small animals, eggs.",
+    tips: ["Speed is your only weapon: always have an escape route.", "Travel in herds for more eyes.", "Kicks are for making space, not winning."],
+    atk: ["Kick when cornered to make space.", "Eat eggs and small animals when you can."], def: ["Speed is your main defence.", "Keep stamina full before crossing open ground."] },
+  diablo: { life: "A mid-size horned dinosaur that lives in herds and fights back.", food: "Shrubs, ferns, low grass.",
+    tips: ["Form a circle facing outward when surrounded.", "Knock raptors down, then step back.", "Don't leave the herd in open fields."],
+    atk: ["Horn charges knock down and cause bleeding.", "Charge, back off, and let the herd strike too."], def: ["Face the enemy and let the herd cover your flanks.", "Stand close together in a ring."] },
+  dryo: { life: "A small, fast herbivore and common prey for most hunters.", food: "Low plants, fruit.",
+    tips: ["Listen for odd sounds before entering a feeding area.", "Zig-zag through trees to lose pursuers.", "Sleep somewhere hidden, near the herd."],
+    atk: ["Almost no real attack.", "Light kicks only to escape a pounce."], def: ["Zig-zag through trees.", "Hear danger and run before you're seen."] },
+  hypsi: { life: "The smallest species; sneaky, digs burrows and hides in bushes.", food: "Plants, fruit, seeds.",
+    tips: ["Hide in a burrow when you spot a hunter.", "Follow big herds for protection.", "Never stand still in the open."],
+    atk: ["No real fighting ability.", "Small bites only to break free."], def: ["Burrow or hide in bushes.", "Small and quick: slip through gaps big dinos can't."] },
+  maia: { life: "A herding duck-bill that tends nests and young.", food: "Leaves, shrubs, grass.",
+    tips: ["Call the herd so everyone fights back together.", "Guard nests: gathering spots attract hunters.", "Your back kick is strong; use it when pounced."],
+    atk: ["Strong back kick against anything behind you.", "The whole herd kicks when the nest is attacked."], def: ["Call the herd together.", "Keep young in the middle of the herd."] },
+  pachy: { life: "A thick-domed head built for charging and stunning opponents.", food: "Low plants, fruit.",
+    tips: ["Build momentum, ram, then back off.", "Ram raptors off your herd-mates.", "Not tough enough to take big hunters' hits."],
+    atk: ["Charge and headbutt to stun.", "Ram pouncing raptors off allies."], def: ["Ram then run; don't trade hits.", "Avoid hunters bigger than you."] },
+  stego: { life: "Back plates and a spiked tail; slow but very dangerous up close.", food: "Low shrubs, ferns.",
+    tips: ["Turn your tail toward attackers.", "Stand by a wall or tree to cover your side.", "Tail strikes cause heavy bleeding; don't get surrounded from the front."],
+    atk: ["Spiked tail swing causes heavy bleeding.", "Keep turning so your tail has an angle."], def: ["Point your tail at the enemy.", "Back against cliffs or trees to protect your flank."] },
+  tenonto: { life: "A mid-size herbivore with a long tail, herding at forest edges.", food: "Leaves, shrubs.",
+    tips: ["Travel in herds and take turns keeping watch.", "Tail-whip to push back small hunters.", "Run into the forest when you meet a Carno."],
+    atk: ["Long tail whip pushes back small hunters.", "Kick when pounced."], def: ["Herd up and take turns on watch.", "Run into the forest from fast hunters."] },
+  trike: { life: "The toughest herbivore; adults can stand up to a Rex.", food: "Shrubs, ferns, grass.",
+    tips: ["Keep your face toward the enemy: horns are shield and spear.", "Charge then turn; don't take hits on your side.", "Very weak when young: stay with adults."],
+    atk: ["Horn charges cause bleeding and broken bones.", "Hits hard enough to face an adult Rex."], def: ["The frill guards your front: always face the enemy.", "Turn in time so nothing bites your flank."] },
+  giga: { life: "The biggest Legacy predator, with long strides and enormous bite damage.", food: "Meat from any large species.",
+    tips: ["Patrol large watering holes.", "Use your long stride to chase over distance.", "Watch out for Utahraptor packs."],
+    atk: ["Massive bite damage.", "Chase with long strides."], def: ["Lots of health, but vulnerable to raptor packs.", "Shake to throw raptors off your back."] },
+  spino: { life: "A semi-aquatic hunter with a sail on its back, strongest in water.", food: "Large fish, prey near the shore.",
+    tips: ["Fight in water for the advantage.", "Slow on land; avoid long chases.", "Dive to escape land hunters."],
+    atk: ["Strong bites and claws in water.", "Ambush close to the shore."], def: ["Dive into water to escape.", "Avoid fighting on dry land."] },
+  acro: { life: "A large hunter with a back ridge, balancing power and speed.", food: "Meat; mid-size and large prey.",
+    tips: ["Lurk at forest edges and strike fast.", "Avoid big Trike herds.", "Scavenge to save energy."],
+    atk: ["Strong bite, faster than other big hunters.", "Hit and back out of horn range."], def: ["Retreat into forest from horned herds.", "Save stamina to escape."] },
+  albert: { life: "A smaller relative of the Rex, fast and used to pack hunting.", food: "Meat; mid-size prey.",
+    tips: ["Hunt in packs of 2–3 for big prey.", "Use speed instead of brawling.", "Avoid Giga and Rex."],
+    atk: ["Repeated bites as a pack.", "Chase with speed."], def: ["Run from apex predators.", "Packmates cover each other."] },
+  allo: { life: "An aggressive large hunter, strongest in pairs.", food: "Meat; mid-size and large prey.",
+    tips: ["Bite and back off to make prey bleed.", "Work with partners to surround.", "Keep stamina before engaging."],
+    atk: ["Bleeding bite, then retreat.", "Surround prey in pairs."], def: ["Don't face apex predators head-on.", "Retreat below half health."] },
+  bary: { life: "A long-snouted semi-aquatic hunter and a good swimmer.", food: "Fish, mid-size prey near water.",
+    tips: ["Fish for steady food.", "Dive underwater when chased.", "Ambush prey coming to drink."],
+    atk: ["Claws and bites in shallow water.", "Fish to stay fed."], def: ["Dive underwater.", "Follow rivers for escape routes."] },
+  sucho: { life: "A Spino relative living along rivers, balanced on land and water.", food: "Fish, riverside prey.",
+    tips: ["Follow the big rivers.", "Fight in shallow water.", "Avoid adult Spinos."],
+    atk: ["Large claws cause bleeding.", "Fight at the riverbank."], def: ["Dive to escape.", "Avoid adult Spinos."] },
+  utah: { life: "A large, fierce raptor that pins prey with its toe claws.", food: "Meat; a pack can take large prey.",
+    tips: ["Pounce and pin prey while packmates bite.", "Alone, only hunt small prey.", "Stay away from Giga."],
+    atk: ["Pounce and pin prey with toe claws.", "The whole pack pins one target."], def: ["Jump off before prey rolls on you.", "Scatter when an apex shows up."] },
+  austro: { life: "A long-snouted, fast raptor that often fishes.", food: "Fish, small animals.",
+    tips: ["Fish in streams while small.", "Run fast to escape.", "Pack up to hunt mid-size prey."],
+    atk: ["Quick bites; fishing.", "Pack up to hunt mid-size prey."], def: ["Speed is your main defence.", "Hide in dense forest."] },
+  puerta: { life: "A colossal sauropod that almost nothing can bring down as an adult.", food: "High leaves.",
+    tips: ["Stomp and tail-whip when surrounded.", "Very easy prey when young; hide well.", "Slow, so plan routes to water early."],
+    atk: ["Stomps and tail whips deal huge damage.", "Crush anything under your feet."], def: ["Enormous health as an adult.", "When young, hide deep in the forest."] },
+  cama: { life: "A mid-size sauropod that herds and eats high leaves.", food: "High leaves.",
+    tips: ["Herd up for protection.", "Stomp small attackers.", "Don't leave the herd while young."],
+    atk: ["Stomps and tail whips.", "The herd stomps together."], def: ["Stay with the herd.", "Stand in open space so you can turn."] },
+  shant: { life: "A giant duck-bill, huge and tough.", food: "Leaves, shrubs, grass.",
+    tips: ["Rely on your size to absorb hits.", "Cross open ground with the herd.", "Back kick when something tails you."],
+    atk: ["Back kicks and stomps.", "Shove enemies back with your bulk."], def: ["Your size soaks damage.", "Cross open fields with the herd."] },
+  theri: { life: "A two-legged herbivore with long scythe-like claws.", food: "Leaves, shrubs.",
+    tips: ["Swipe claws to make close attackers bleed.", "Stand where trees are sparse to swing freely.", "Not a fast runner; don't get chased long."],
+    atk: ["Long claw swipes cause heavy bleeding.", "Keep enemies at claw range."], def: ["Stand in open space to swing.", "You can't outrun much; pick where to fight."] },
+  para: { life: "A duck-bill with a tube crest that calls loudly to its herd.", food: "Leaves, shrubs.",
+    tips: ["Use your call to alert the whole herd.", "Run on two legs when you need speed.", "Cross dangerous areas with the herd."],
+    atk: ["Kick when something latches on.", "No strong attacks."], def: ["Call to alert the herd.", "Run on two legs for speed."] },
+  velo: { life: "A small, feathered, very fast raptor that survives by packing up and hiding.", food: "Small animals, juveniles, carcasses.",
+    tips: ["Hunt in big packs to take prey larger than you.", "Use speed and brush to escape.", "Stay away from any mid-size or larger hunter."],
+    atk: ["Fast pounces and bites, the whole pack rushing in.", "Target juveniles and small species."], def: ["Run and weave through brush.", "Scatter when chased."] },
+  quetz: { life: "A giant flying reptile that travels far and walks on all fours on the ground.", food: "Fish, small animals, carcasses.",
+    tips: ["Fly high to find food and water.", "Land in open ground so you can take off again.", "Slow on the ground; don't linger near hunters."],
+    atk: ["Hard pecks against small creatures.", "Swoop down to catch fish."], def: ["Take off the moment something gets close.", "Rest somewhere high and open."] },
+  ava: { life: "A small horned dinosaur, faster than a Trike but weaker.", food: "Low shrubs.",
+    tips: ["Charge small hunters away.", "Follow Trike herds for protection.", "Run from big hunters."],
+    atk: ["Small horn charges.", "Charge off small hunters."], def: ["Follow big horned herds.", "Run from large hunters."] }
+};
+// Pick the current language's text for a species
+function txt(d) {
+  const c = COMBAT[d.id];
+  if (lang === "vi") return { life: d.life, food: d.food, tips: d.tips, atk: c.atk, def: c.def, tier: d.tier, group: d.group };
+  const e = EN[d.id];
+  return { ...e, tier: TIER_EN[d.tier] || d.tier, group: GROUP_EN[d.group] || d.group };
+}
+
+// Wikimedia Commons life restorations (mostly the TotalDino series), resized to 640px
+const PHOTO = {
+  rex: {"f":"img/rex.png","by":"TotalDino","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:Tyrannosaurus_TD.png"},
+  carno: {"f":"img/carno.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Carnotaurus_TD.png"},
+  cerato: {"f":"img/cerato.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Ceratosaurus_TD.png"},
+  deino: {"f":"img/deino.png","by":"Andrey Atuchin","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:Deinosuchus_illustration_Andrey_Atuchin.jpg"},
+  dilo: {"f":"img/dilo.png","by":"TotalDino","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:Dilophosaurus_TD.png"},
+  herrera: {"f":"img/herrera.png","by":"TotalDino","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:Herrerasaurus_TD.png"},
+  ptera: {"f":"img/ptera.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Pteranodon_TD.png"},
+  troodon: {"f":"img/troodon.png","by":"Conty","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:Troodon_or_Stenonychosaurus_(update).png"},
+  allo: {"f":"img/allo.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Allosaurus_TD.png"},
+  beipi: {"f":"img/beipi.png","by":"PaleoNeolitic","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Beipiaosaurus_Restoration.png"},
+  galli: {"f":"img/galli.png","by":"PaleoNeolitic","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Gallimimus_Restoration.png"},
+  diablo: {"f":"img/diablo.png","by":"TotalDino","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:Diabloceratops_TD.png"},
+  dryo: {"f":"img/dryo.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Dryosaurus_TD.png"},
+  hypsi: {"f":"img/hypsi.png","by":"TotalDino","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:Hypsilophodon_TD.png"},
+  maia: {"f":"img/maia.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Maiasaura_TD.png"},
+  pachy: {"f":"img/pachy.png","by":"TotalDino","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:Pachycephalosaurus_TD.png"},
+  stego: {"f":"img/stego.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Stegosaurus_TD.png"},
+  tenonto: {"f":"img/tenonto.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Tenontosaurus_TD.png"},
+  trike: {"f":"img/trike.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Triceratops_TD.png"},
+  giga: {"f":"img/giga.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Giganotosaurus_TD.png"},
+  spino: {"f":"img/spino.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Spinosaurus_TD.png"},
+  acro: {"f":"img/acro.png","by":"TotalDino","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:Acrocanthosaurus_TD.png"},
+  albert: {"f":"img/albert.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Albertosaurus_TD.png"},
+  bary: {"f":"img/bary.png","by":"TotalDino","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:Baryonyx_TD.png"},
+  sucho: {"f":"img/sucho.png","by":"Sauroarchive","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:Suchomimus_life_restoration_(2024).png"},
+  utah: {"f":"img/utah.png","by":"Fred Wierum","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:Utahraptor_Restoration.png"},
+  austro: {"f":"img/austro.png","by":"TotalDino","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:Austroraptor_TD.png"},
+  puerta: {"f":"img/puerta.png","by":"Karkemish","lic":"CC BY 3.0","src":"https://commons.wikimedia.org/wiki/File:Puertasaurus_copia.jpg"},
+  cama: {"f":"img/cama.png","by":"TotalDino","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:Camarasaurus_TD.png"},
+  shant: {"f":"img/shant.png","by":"IJReid","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Shantungosaurus_life.png"},
+  theri: {"f":"img/theri.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Therizinosaurus_TD.png"},
+  para: {"f":"img/para.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Parasaurolophus_TD.png"},
+  ava: {"f":"img/ava.png","by":"Mariana Ruiz Villarreal LadyofHats","lic":"Public domain","src":"https://commons.wikimedia.org/wiki/File:Avaceratops_dinosaur.png"},
+  velo: {"f":"img/velo.png","by":"TotalDino","lic":"CC BY 4.0","src":"https://commons.wikimedia.org/wiki/File:Velociraptor_TD.png"},
+  quetz: {"f":"img/quetz.png","by":"Jfstudiospaleoart","lic":"CC BY-SA 4.0","src":"https://commons.wikimedia.org/wiki/File:QuetzalcoatlusNorthropiJF.png"},
+  omni: {"f":"img/omni.png","user":true},
+};
+
+// ---------- silhouettes ----------
+function theropod(o) {
+  const s = o.big ? 1.12 : o.small === 2 ? .72 : o.small ? .85 : 1;
+  const hr = o.slim ? [15, 6] : [17, 9];
+  let neck = '<polygon points="114,40 134,26 142,38 122,56"/>', hx = 148, hy = 30;
+  if (o.mimid) { neck = '<polygon points="116,44 150,10 158,16 124,56"/>'; hx = 160; hy = 12; }
+  if (o.herbi) { hr[0] = 11; hr[1] = 7; }
+  let x = '';
+  if (o.sail) x += '<path d="M66,44 C72,6 118,6 124,40 Z"/>';
+  if (o.ridge) x += '<path d="M66,42 C80,24 110,24 122,40 Z"/>';
+  if (o.feathers) for (let i = 0; i < 6; i++) x += `<polygon points="${60 + i * 9},${41 - i % 2} ${66 + i * 9},${30 + i % 2 * 3} ${70 + i * 9},${41}"/>`;
+  if (o.horns) x += `<polygon points="${hx - 4},${hy - 6} ${hx - 1},${hy - 16} ${hx + 2},${hy - 6}"/>`;
+  if (o.crest === 1) x += `<polygon points="${hx + 2},${hy - 7} ${hx + 6},${hy - 14} ${hx + 9},${hy - 6}"/>`;
+  if (o.crest === 2) x += `<path d="M${hx - 8},${hy - 6} C${hx - 4},${hy - 20} ${hx + 8},${hy - 20} ${hx + 10},${hy - 6} Z"/>`;
+  if (o.dome) x += `<circle cx="${hx - 3}" cy="${hy - 6}" r="9"/>`;
+  const arm = o.claws ? `<path d="M120,56 L132,66 L140,72" stroke="currentColor" stroke-width="${o.claws === 2 ? 4 : 3}" fill="none" stroke-linecap="round"/><path d="M140,72 l8,2 M140,72 l6,6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>` : '<path d="M120,56 L128,64 L132,66" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>';
+  return `<g transform="translate(100 98) scale(${s}) translate(-100 -98)">
+    <polygon points="8,46 72,40 72,64"/>
+    <polygon points="78,56 92,56 90,80 84,96 96,98 80,98 78,78" opacity=".72"/>
+    ${x}<ellipse cx="95" cy="52" rx="32" ry="17"/>${neck}
+    <ellipse cx="${hx}" cy="${hy}" rx="${hr[0]}" ry="${hr[1]}"/>
+    <circle cx="${hx + 2}" cy="${hy - 2}" r="1.6" fill="var(--surface)"/>
+    ${arm}
+    <polygon points="94,56 110,56 106,80 100,96 112,98 94,98 92,78"/>
+  </g>`;
+}
+function quad(o) {
+  const s = o.big ? 1.1 : o.small ? .8 : 1;
+  let head = '<polygon points="126,50 150,46 156,62 128,70"/><ellipse cx="158" cy="58" rx="12" ry="9"/>', eye = [160, 55], x = '';
+  if (o.longneck) { head = '<path d="M118,52 C140,40 156,20 170,14 L176,22 C162,32 148,52 128,68 Z"/><ellipse cx="178" cy="16" rx="10" ry="6"/>'; eye = [181, 14]; }
+  if (o.hadro) { x += o.hadro === 2 ? '<path d="M160,52 L188,34" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>' : '<polygon points="154,50 160,42 164,50"/>'; }
+  if (o.frill) { x += '<ellipse cx="146" cy="48" rx="12" ry="17"/>'; if (o.frill >= 2) x += '<path d="M156,50 L176,40 M158,54 L178,48" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>'; if (o.frill === 3) x += '<path d="M166,60 L176,54" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>'; }
+  if (o.plates) { for (let i = 0; i < 7; i++) x += `<polygon points="${62 + i * 10},${46 - Math.sin(i / 6 * Math.PI) * 6} ${67 + i * 10},${24 - Math.sin(i / 6 * Math.PI) * 10} ${72 + i * 10},${46 - Math.sin(i / 6 * Math.PI) * 6}"/>`; x += '<path d="M14,54 L6,44 M18,55 L12,64" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>'; }
+  const tail = o.longtail ? '<polygon points="2,54 62,48 62,66"/>' : '<polygon points="12,58 62,48 62,66"/>';
+  return `<g transform="translate(100 98) scale(${s}) translate(-100 -98)">
+    ${tail}<rect x="80" y="64" width="10" height="34" rx="3" opacity=".72"/><rect x="118" y="64" width="10" height="34" rx="3" opacity=".72"/>
+    ${x}<ellipse cx="96" cy="58" rx="38" ry="20"/>${head}
+    <circle cx="${eye[0]}" cy="${eye[1]}" r="1.6" fill="var(--surface)"/>
+    <rect x="70" y="66" width="11" height="32" rx="3"/><rect x="108" y="66" width="11" height="32" rx="3"/>
+  </g>`;
+}
+function croc() {
+  return `<path d="M4,74 C40,66 70,62 100,62 L170,66 L196,72 L170,78 L100,84 C70,84 40,80 4,74 Z"/>
+    <rect x="70" y="80" width="8" height="16" rx="3"/><rect x="120" y="80" width="8" height="16" rx="3"/>
+    <path d="M60,62 L66,56 L72,62 L78,56 L84,62 L90,56 L96,62" fill="currentColor"/>
+    <circle cx="160" cy="66" r="1.8" fill="var(--surface)"/>
+    <path d="M2,90 C60,86 140,86 198,90" stroke="currentColor" stroke-width="1.5" fill="none" opacity=".4"/>`;
+}
+function ptero() {
+  return `<polygon points="100,52 20,24 60,56"/><polygon points="100,52 180,24 140,56"/>
+    <ellipse cx="100" cy="56" rx="12" ry="8"/><polygon points="108,50 150,58 108,60"/>
+    <polygon points="104,50 80,38 108,46"/><circle cx="112" cy="53" r="1.5" fill="var(--surface)"/>`;
+}
+// Real photo when we have one (Omniraptor uses its closest real relative); silhouette otherwise
+function picFor(d, big) {
+  if (!PHOTO[d.id]) return svgFor(d);
+  return `<img class="photo" src="${PHOTO[d.id].f}" alt="${esc(d.name)}" ${big ? "" : 'loading="lazy"'} width="640" height="352">`;
+}
+function creditFor(d) {
+  const p = PHOTO[d.id], en = lang === "en";
+  if (!p) return "";
+  if (p.user) return `<p class="credit">${en ? "Image supplied by the guide owner; source unknown. Omniraptor is invented for the game, so this is an artist's impression, not a real animal." : "Ảnh do chủ sổ tay cung cấp, chưa rõ nguồn. Omniraptor là loài do game tạo ra nên đây là tranh minh hoạ, không phải con vật có thật."}</p>`;
+  const ref = p.ref ? (en ? `Omniraptor is invented for the game; this is ${p.ref}, the real raptor it most resembles. ` : `Omniraptor là loài do game tạo ra; đây là ${p.ref}, loài raptor có thật giống nó nhất. `) : "";
+  return `<p class="credit">${ref}${en ? "Photo" : "Ảnh"}: ${esc(p.by)} · ${esc(p.lic)} · <a href="${esc(p.src)}" target="_blank" rel="noopener">Wikimedia Commons</a>. ${en ? "A scientific life restoration based on fossils, not in-game art." : "Tranh phục dựng khoa học dựa trên hoá thạch, không phải hình trong game."}</p>`;
+}
+function svgFor(d) {
+  const body = d.plan === "quad" ? quad(d.o) : d.plan === "croc" ? croc() : d.plan === "ptero" ? ptero() : theropod(d.o);
+  return `<svg viewBox="0 0 200 110" fill="currentColor" role="img" aria-label="${esc(T().alt(d.name))}"><ellipse cx="100" cy="100" rx="80" ry="4" opacity=".15"/>${body}</svg>`;
+}
+
+// ---------- list rendering ----------
+let dietFilter = "all", habitatFilter = "all", query = "", openId = null;
+const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d");
+let viewersBySpecies = {};            // id -> [peer...] (filled by the room)
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const kbd = keys => keys.map(k => `<kbd>${esc(k)}</kbd>`).join(" + ");
+const keyOf = (row) => kbd(lang === "en" && row.ke ? row.ke : row.k) + (row.kh ? ` <span class="hold">${lang === "en" ? "hold" : "giữ"}</span>` : "");
+
+function renderList() {
+  const q = norm(query.trim());
+  const both = d => [d.name, d.nick, UI.vi.diet[d.diet], UI.en.diet[d.diet], UI.vi.habitat[habitatOf(d)], UI.en.habitat[habitatOf(d)], d.tier, TIER_EN[d.tier] || ""].join(" ");
+  const shown = DINOS.filter(d => (dietFilter === "all" || d.diet === dietFilter)
+    && (habitatFilter === "all" || habitatOf(d) === habitatFilter)
+    && (!q || norm(both(d)).includes(q)));
+  $("#count").textContent = T().count(shown.length, DINOS.length);
+  // One list A–Z; species not playable in Evrima keep a small "Legacy" tag
+  const items = [...shown].sort((a, b) => a.name.localeCompare(b.name));
+  let html = "";
+  if (items.length) {
+    html += `<div class="grid">`;
+    for (const d of items) {
+      const n = (viewersBySpecies[d.id] || []).length, x = txt(d);
+      html += `<button class="card" data-id="${d.id}">${picFor(d)}
+        <span class="name">${esc(d.name)}</span>
+        <span class="meta"><span class="pill ${d.diet}">${T().diet[d.diet]}</span>${habitatOf(d) !== "land" ? `<span class="pill hab">${T().habitat[habitatOf(d)]}</span>` : ""}<span class="pill tier">${esc(x.tier)}</span>${d.branch === "legacy" ? `<span class="pill tier" title="${T().legacyTip}">Legacy</span>` : ""}${n ? `<span class="watchers">👁 ${n}</span>` : ""}</span></button>`;
+    }
+    html += "</div>";
+  }
+  $("#list").innerHTML = html || `<p class="count">${T().empty}</p>`;
+}
+
+function keyTable() {
+  const en = lang === "en";
+  return `<div class="key-body"><table class="keys"><tbody>${KEYS.map(r => `<tr><td>${keyOf(r)}</td><td>${esc(en ? r.en : r.vi)}${r.sure ? "" : ' <span class="unsure">*</span>'}</td></tr>`).join("")}</tbody></table></div>
+    <p class="note">${en ? "* Common default, not confirmed by a source. Every key can be rebound: check Settings → Key Bindings in game." : "* Phím mặc định phổ biến, chưa xác nhận được qua nguồn. Mọi phím đều đổi được: kiểm tra Settings → Key Bindings trong game."}</p>`;
+}
+function slotGuide() {
+  return lang === "en"
+    ? `<ul><li>Slot 1 opens at Juvenile, slot 2 at Sub-adult, slot 3 near Adult. Growing faster unlocks them sooner.</li><li>Prime / Elder adds a 4th slot; hatchlings from a player nest can inherit some parent mutations.</li><li>Lifestyle mutations (marked "task unlock") open after an in-game task and stay unlocked for your account.</li><li>Avoid harmful inherited mutations such as spasms, blindness or infertility.</li></ul>`
+    : `<ul><li>Slot 1 mở khi lên Juvenile, slot 2 ở Sub-adult, slot 3 gần Adult. Lớn nhanh hơn thì mở sớm hơn.</li><li>Lên Prime / Elder mở thêm slot 4; con nở từ tổ người chơi có thể thừa hưởng mutation của bố mẹ.</li><li>Mutation "lối sống" (ghi "mở khoá bằng nhiệm vụ") mở sau khi làm nhiệm vụ trong game và giữ cho cả tài khoản.</li><li>Tránh mutation có hại khi được thừa hưởng: co giật, mù, vô sinh.</li></ul>`;
+}
+
+function renderPanel() {
+  const d = DINOS.find(x => x.id === openId);
+  if (!d) { $("#sheet").hidden = true; return; }
+  const x = txt(d), t = T(), en = lang === "en", li = a => a.map(s => `<li>${esc(s)}</li>`).join("");
+  const build = BUILD[d.id];
+  const mutHtml = build
+    ? `<ol class="mut">${build.map((k, i) => `<li><span class="slot">${["Juvenile", "Sub-adult", "Adult"][i]}</span><span><b>${esc(MUT[k].n)}</b><br><small>${esc(en ? MUT[k].en : MUT[k].vi)}</small></span></li>`).join("")}</ol>
+       <p class="note">${en ? "Names as shown in game. Effect values follow community guides and change with patches." : "Tên đúng như trong game. Con số hiệu ứng theo hướng dẫn cộng đồng và thay đổi theo bản vá."}</p>
+       <details class="sub"><summary>${en ? "How mutation slots work" : "Cách mở slot mutation"}</summary>${slotGuide()}</details>`
+    : `<p class="note">${en ? "Legacy has no mutation system. Mutations exist only in Evrima." : "Bản Legacy không có hệ thống mutation; mutation chỉ có ở Evrima."}</p>`;
+  const atkKeys = KEYS.filter(r => ["Chuột trái", "Chuột phải", "Shift", "3"].includes(r.k[0]));
+  const defKeys = KEYS.filter(r => ["Z", "C", "Q", "1"].includes(r.k[0]));
+  const keyList = rows => `<ul class="keyrow">${rows.map(r => `<li>${keyOf(r)} <span>${esc(en ? r.en : r.vi)}</span></li>`).join("")}</ul>`;
+  $("#sheet").hidden = false;
+  $("#panel").innerHTML = `<button class="close" id="closeBtn">${t.close}</button>
+    <figure class="hero">${picFor(d, true)}${creditFor(d)}</figure>
+    <div><div class="eyebrow">${t.branch[d.branch]}</div><h2 id="dName">${esc(d.name)}</h2><p class="sci">${esc(t.nick(d.nick))}</p></div>
+    <dl class="facts">
+      <div class="fact"><dt>${t.facts.diet}</dt><dd>${t.diet[d.diet]}</dd></div>
+      <div class="fact"><dt>${t.facts.habitat}</dt><dd>${t.habitat[habitatOf(d)]}</dd></div>
+      <div class="fact"><dt>${t.facts.tier}</dt><dd>${esc(x.tier)}</dd></div>
+      <div class="fact"><dt>${t.facts.group}</dt><dd>${esc(x.group)}</dd></div>
+    </dl>
+    <div class="block"><h3>${t.h.life}</h3><p>${esc(x.life)}</p></div>
+    <div class="block"><h3>${t.h.food}</h3><p>${esc(x.food)}</p></div>
+    <div class="block"><h3>${t.h.tips}</h3><ul>${li(x.tips)}</ul></div>
+    <div class="duo">
+      <div class="block"><h3>${t.h.atk}</h3><ul>${li(x.atk)}</ul>${keyList(atkKeys)}</div>
+      <div class="block"><h3>${t.h.def}</h3><ul>${li(x.def)}</ul>${keyList(defKeys)}</div>
+    </div>
+    <div class="block"><h3>${en ? "All controls" : "Toàn bộ phím điều khiển"}</h3>
+      <details class="sub"><summary>${en ? "Show the PC key list" : "Xem bảng phím trên PC"}</summary>${keyTable()}</details></div>
+    <div class="block"><h3>${t.h.mut}</h3>${mutHtml}</div>
+    <p class="cowatch" id="cowatch"></p>`;
+  renderCowatch();
+  $("#closeBtn").focus();
+}
+
+function openSpecies(id) {
+  openId = id;
+  try { history.replaceState(null, "", id ? "#" + id : location.pathname); } catch {}
+  renderPanel();
+  setPresence();
+}
+
+function setLang(l) {
+  lang = l;
+  try { localStorage.setItem("isle-lang", l); } catch {}
+  document.documentElement.lang = l;
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === l));
+  $("#q").placeholder = T().placeholder;
+  $("#nickLabel").textContent = T().nickLabel;
+  $("#nickInput").placeholder = T().nickPlaceholder;
+  $("#nickSave").textContent = T().nickSave;
+  renderRoomText();
+  renderList();
+  if (openId) { const sc = $("#panel").scrollTop; renderPanel(); $("#panel").scrollTop = sc; }
+  renderRoom(room ? room.peers() : []);
+}
+
+$("#list").addEventListener("click", e => { const c = e.target.closest(".card"); if (c) openSpecies(c.dataset.id); });
+$("#sheet").addEventListener("click", e => { if (e.target.id === "sheet" || e.target.id === "closeBtn") openSpecies(null); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && openId) openSpecies(null); });
+document.querySelector(".lang").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setLang(b.dataset.lang); });
+$("#dietChips").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  dietFilter = b.dataset.diet;
+  document.querySelectorAll("#dietChips .chip").forEach(c => c.setAttribute("aria-pressed", c === b));
+  renderList();
+});
+$("#habChips").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  habitatFilter = b.dataset.hab;
+  document.querySelectorAll("#habChips .chip").forEach(c => c.setAttribute("aria-pressed", c === b));
+  renderList();
+});
+$("#q").addEventListener("input", e => { query = e.target.value; renderList(); });
+
+// ---------- live room: who is here, join/leave notices ----------
+let room = null, user = null, profiles = {}, settled = false;
+let roomState = "connecting";          // connecting | live | solo | noRoom
+let peopleCount = 0;
+
+function setPresence() { room?.presence({ viewing: openId }).catch(() => {}); }
+
+function renderRoomText() {
+  const t = T();
+  $("#room").classList.toggle("live", roomState === "live");
+  $("#roomText").textContent = roomState === "live" ? t.online(peopleCount) : roomState === "solo" ? t.solo : roomState === "noRoom" ? t.soloNoRoom : t.connecting;
+}
+
+async function nameOf(peer) {
+  if (peer.kind === "agent") return { name: "Claude", avatarUrl: "" };
+  if (peer.by && profiles[peer.by]) return profiles[peer.by];
+  // On the self-hosted server people pick a nickname instead of having a Claude profile
+  if (typeof peer.presence?.nick === "string" && peer.presence.nick) return { name: peer.presence.nick, avatarUrl: "" };
+  return { name: "", avatarUrl: "" };
+}
+async function refreshProfiles(peers) {
+  if (!user) return;
+  const ids = [...new Set(peers.map(p => p.by).filter(Boolean))];
+  if (ids.length) profiles = { ...profiles, ...(await user.profiles(ids)) };
+}
+function label(peer, p) { const t = T(); return peer.isMe ? t.you : (p.name || (peer.guest ? t.guest : t.someone)); }
+
+function toast(text, avatar, leave) {
+  const t = document.createElement("div");
+  t.className = "toast" + (leave ? " leave" : "");
+  if (avatar) { const i = document.createElement("img"); i.src = avatar; i.alt = ""; t.append(i); }
+  const s = document.createElement("span"); s.textContent = text; t.append(s);
+  $("#toasts").append(t);
+  setTimeout(() => t.remove(), 5000);
+}
+
+async function renderRoom(peers) {
+  if (!room) return;
+  const people = peers.filter(p => p.kind === "viewer");
+  roomState = "live"; peopleCount = people.length;
+  renderRoomText();
+  const faces = $("#faces"); faces.replaceChildren();
+  viewersBySpecies = {};
+  for (const peer of people) {
+    const p = await nameOf(peer);
+    const v = typeof peer.presence?.viewing === "string" ? peer.presence.viewing : null;
+    const dino = DINOS.find(d => d.id === v);
+    if (dino) (viewersBySpecies[dino.id] ||= []).push(peer);
+    const f = document.createElement("div"); f.className = "face";
+    const img = document.createElement("img"); img.src = p.avatarUrl || ""; img.alt = ""; if (!p.avatarUrl) img.hidden = true;
+    const b = document.createElement("b"); b.textContent = label(peer, p);
+    f.append(img, b);
+    if (dino) { const sm = document.createElement("small"); sm.textContent = "· " + dino.nick; f.append(sm); }
+    faces.append(f);
+  }
+  renderList();
+  renderCowatch();
+}
+
+async function renderCowatch() {
+  const el = $("#cowatch"); if (!el || !openId) return;
+  const others = (viewersBySpecies[openId] || []).filter(p => !p.isMe);
+  if (!others.length) { el.textContent = ""; return; }
+  const names = await Promise.all(others.map(async peer => label(peer, await nameOf(peer))));
+  el.textContent = T().cowatch(names.join(", "));
+}
+
+setLang(lang);
+const fromHash = location.hash.slice(1);
+if (DINOS.some(d => d.id === fromHash)) openSpecies(fromHash);
+
+// Room for the self-hosted server (server.js): same calls the page uses from the Claude room,
+// backed by a Server-Sent Events stream and a POST for this tab's presence.
+function serverRoom() {
+  if (!window.EventSource || !window.fetch) return null;
+  const me = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36)).replace(/[^A-Za-z0-9_-]/g, "");
+  const state = { nick: "", viewing: null };
+  try { state.nick = localStorage.getItem("isle-nick") || ""; } catch {}
+  let list = [], es = null;
+  const handlers = [], errorHandlers = [];
+  const toPeer = p => Object.freeze({ peer: p.id, by: null, isMe: p.id === me, sameTab: p.id === me, kind: "viewer", guest: false,
+    presence: Object.freeze({ viewing: p.viewing, nick: p.nick }) });
+  const post = () => fetch("api/presence", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: me, ...state }) });
+  const connect = () => {
+    es = new EventSource("api/events?id=" + me);
+    es.onmessage = e => {
+      let msg; try { msg = JSON.parse(e.data); } catch { return; }
+      if (!Array.isArray(msg.peers)) return;
+      const next = msg.peers.map(toPeer), before = new Map(list.map(p => [p.peer, p])), after = new Set(next.map(p => p.peer));
+      const joined = next.filter(p => !before.has(p.peer)), left = list.filter(p => !after.has(p.peer));
+      const updated = next.filter(p => before.has(p.peer) && JSON.stringify(before.get(p.peer).presence) !== JSON.stringify(p.presence));
+      list = next;
+      handlers.forEach(h => h({ peers: list, joined, left, updated }));
+    };
+  };
+  // Send the nickname first so the join notice others see already carries it
+  post().catch(() => {}).finally(connect);
+  return {
+    presence(patch) { Object.assign(state, patch); return post().then(() => {}); },
+    peers: () => list,
+    onPeers(h, onError) { handlers.push(h); if (onError) errorHandlers.push(onError); return () => {}; },
+    get nick() { return state.nick; }
+  };
+}
+
+$("#nickForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const nick = $("#nickInput").value.trim().slice(0, 24);
+  try { localStorage.setItem("isle-nick", nick); } catch {}
+  room?.presence({ nick }).then(() => toast(T().nickSaved), () => {});
+});
+
+(async () => {
+  if (window.claude?.use) {
+    [room, user] = await Promise.all([claude.use("room"), claude.use("user")]);
+  } else {
+    room = serverRoom();
+    if (room) { $("#nickForm").hidden = false; $("#nickInput").value = room.nick; }
+  }
+  if (!room) { roomState = "noRoom"; renderRoomText(); return; }
+  setPresence();
+  setTimeout(() => { settled = true; }, 2500);   // the first deliveries replay everyone already here
+  room.onPeers(async ch => {
+    await refreshProfiles(ch.peers);
+    if (settled) {
+      for (const peer of ch.joined) if (!peer.isMe && peer.kind === "viewer") { const p = await nameOf(peer); toast(T().joined(label(peer, p)), p.avatarUrl); }
+      for (const peer of ch.left) if (!peer.isMe && peer.kind === "viewer") { const p = await nameOf(peer); toast(T().left(label(peer, p)), p.avatarUrl, true); }
+    }
+    renderRoom(ch.peers);
+  }, () => { room = null; roomState = "solo"; renderRoomText(); });
+})();
+</script>

@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: the-isle-field-guide
+    runtime: node
+    plan: free
+    buildCommand: "true"
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    # Presence lives in memory, so keep a single instance
+    numInstances: 1

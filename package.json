@@ -1,0 +1,13 @@
+{
+  "name": "the-isle-field-guide",
+  "version": "1.0.0",
+  "description": "Bilingual (VI/EN) field guide to The Isle dinosaurs with a live 'who is online' room",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
