@@ -107,8 +107,10 @@ footer { color: var(--muted); font-size: 12.5px; padding-block: 28px 40px; borde
 .card .photo { width: 100%; height: auto; aspect-ratio: 200 / 110; object-fit: contain; border-radius: 6px; background: var(--fog) }
 .hero { margin: 0; display: grid; gap: 6px }
 .hero .photo, .hero svg { width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: contain; border-radius: 10px; background: var(--fog) }
-.credit { margin: 0; font-size: 12px; color: var(--muted) }
-.credit a { color: var(--accent) }
+.credits { margin-top: 10px }
+.credits summary { cursor: pointer; color: var(--muted) }
+.credits ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 2px; font-size: 12px }
+.credits a { color: var(--accent) }
 details.sub summary { cursor: pointer; font-size: 14px; color: var(--accent); padding-block: 4px }
 details.sub ul { margin-top: 6px !important; font-size: 14px }
 .key-body { padding-bottom: 14px; overflow-x: auto }
@@ -169,7 +171,10 @@ html[lang="en"] [data-l="vi"], html[lang="vi"] [data-l="en"] { display: none !im
     <span class="count" id="count"></span>
   </div>
   <div id="list"></div>
-  <footer><span data-l="vi">Thông tin tóm tắt lối chơi phổ biến của cộng đồng; chỉ số và cơ chế thay đổi theo từng bản cập nhật của The Isle. Ảnh là tranh phục dựng từ Wikimedia Commons, ghi tác giả và giấy phép trong hồ sơ từng loài; không phải hình trong game.</span><span data-l="en">A summary of common community playstyles; stats and mechanics change with every update of The Isle. Images are life restorations from Wikimedia Commons, credited with author and licence on each profile; they are not in-game art.</span></footer>
+  <footer>
+    <span data-l="vi">Thông tin tóm tắt lối chơi phổ biến của cộng đồng; chỉ số và cơ chế thay đổi theo từng bản cập nhật của The Isle. Ảnh là tranh phục dựng, không phải hình trong game.</span><span data-l="en">A summary of common community playstyles; stats and mechanics change with every update of The Isle. Images are life restorations, not in-game art.</span>
+    <details class="credits"><summary id="creditsTitle">Nguồn ảnh</summary><ul id="creditsList"></ul></details>
+  </footer>
 </main>
 
 <div class="sheet" id="sheet" hidden><div class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="dName"></div></div>
@@ -680,12 +685,13 @@ function picFor(d, big) {
   if (!PHOTO[d.id]) return svgFor(d);
   return `<img class="photo" src="${PHOTO[d.id].f}" alt="${esc(d.name)}" ${big ? "" : 'loading="lazy"'} width="640" height="352">`;
 }
-function creditFor(d) {
-  const p = PHOTO[d.id], en = lang === "en";
-  if (!p) return "";
-  if (p.user) return `<p class="credit">${en ? "Image supplied by the guide owner; source unknown. Omniraptor is invented for the game, so this is an artist's impression, not a real animal." : "Ảnh do chủ sổ tay cung cấp, chưa rõ nguồn. Omniraptor là loài do game tạo ra nên đây là tranh minh hoạ, không phải con vật có thật."}</p>`;
-  const ref = p.ref ? (en ? `Omniraptor is invented for the game; this is ${p.ref}, the real raptor it most resembles. ` : `Omniraptor là loài do game tạo ra; đây là ${p.ref}, loài raptor có thật giống nó nhất. `) : "";
-  return `<p class="credit">${ref}${en ? "Photo" : "Ảnh"}: ${esc(p.by)} · ${esc(p.lic)} · <a href="${esc(p.src)}" target="_blank" rel="noopener">Wikimedia Commons</a>. ${en ? "A scientific life restoration based on fossils, not in-game art." : "Tranh phục dựng khoa học dựa trên hoá thạch, không phải hình trong game."}</p>`;
+// One compact credits list in the footer (CC BY / BY-SA images must name their authors somewhere on the page)
+function renderCredits() {
+  const en = lang === "en";
+  const rows = DINOS.filter(d => PHOTO[d.id] && !PHOTO[d.id].user).sort((x, y) => x.name.localeCompare(y.name))
+    .map(d => { const p = PHOTO[d.id]; return `<li>${esc(d.name)}${p.ref ? " (" + esc(p.ref) + ")" : ""}: ${esc(p.by)}, ${esc(p.lic)}, <a href="${esc(p.src)}" target="_blank" rel="noopener">Wikimedia Commons</a></li>`; }).join("");
+  $("#creditsTitle").textContent = en ? "Image credits" : "Nguồn ảnh";
+  $("#creditsList").innerHTML = rows;
 }
 function svgFor(d) {
   const body = d.plan === "quad" ? quad(d.o) : d.plan === "croc" ? croc() : d.plan === "ptero" ? ptero() : theropod(d.o);
@@ -750,7 +756,7 @@ function renderPanel() {
   const keyList = rows => `<ul class="keyrow">${rows.map(r => `<li>${keyOf(r)} <span>${esc(en ? r.en : r.vi)}</span></li>`).join("")}</ul>`;
   $("#sheet").hidden = false;
   $("#panel").innerHTML = `<button class="close" id="closeBtn">${t.close}</button>
-    <figure class="hero">${picFor(d, true)}${creditFor(d)}</figure>
+    <figure class="hero">${picFor(d, true)}</figure>
     <div><div class="eyebrow">${t.branch[d.branch]}</div><h2 id="dName">${esc(d.name)}</h2><p class="sci">${esc(t.nick(d.nick))}</p></div>
     <dl class="facts">
       <div class="fact"><dt>${t.facts.diet}</dt><dd>${t.diet[d.diet]}</dd></div>
@@ -790,6 +796,7 @@ function setLang(l) {
   $("#nickInput").placeholder = T().nickPlaceholder;
   $("#nickSave").textContent = T().nickSave;
   renderRoomText();
+  renderCredits();
   renderList();
   if (openId) { const sc = $("#panel").scrollTop; renderPanel(); $("#panel").scrollTop = sc; }
   renderRoom(room ? room.peers() : []);
