@@ -108,6 +108,9 @@ footer { color: var(--muted); font-size: 12.5px; padding-block: 28px 40px; borde
 .hero { margin: 0; display: grid; gap: 6px }
 .hero .photo, .hero svg { width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: contain; border-radius: 10px; background: var(--fog) }
 .credits { margin-top: 10px }
+details.care { border-top: 1px solid var(--line); padding-block: 2px }
+details.care:first-of-type { margin-top: 8px }
+.block p + ul, .block ul + details { margin-top: 6px }
 .credits summary { cursor: pointer; color: var(--muted) }
 .credits ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 2px; font-size: 12px }
 .credits a { color: var(--accent) }
@@ -460,7 +463,9 @@ const KEYS = [
   { k: ["Z"], vi: "Bật/tắt chạy nước kiệu (đỡ tốn sức)", en: "Toggle trot (saves stamina)", sure: true },
   { k: ["C"], vi: "Cúi người (khó bị phát hiện)", en: "Crouch (harder to spot)", sure: true },
   { k: ["Q"], kh: true, vi: "Giữ để đánh hơi, tìm mồi và xác", en: "Hold to sniff for prey and carcasses", sure: true },
-  { k: ["E"], vi: "Ăn, uống, đặt trứng", en: "Eat, drink, lay eggs", sure: true },
+  { k: ["E"], vi: "Ăn, uống, đặt trứng, liếm đá muối", en: "Eat, drink, lay eggs, lick salt", sure: true },
+  { k: ["H"], vi: "Nằm nghỉ (hồi máu, liền xương, cầm máu)", en: "Rest (heal, mend bones, stop bleeding)", sure: true },
+  { k: ["G"], vi: "Nhặt nội tạng từ xác (ăn thịt)", en: "Pick up an organ from a carcass (carnivores)", sure: true },
   { k: ["F"], vi: "Gầm / gọi thường", en: "Normal call", sure: true },
   { k: ["1"], vi: "Gọi phát sóng (gọi đàn từ xa)", en: "Broadcast call", sure: true },
   { k: ["2"], vi: "Gọi thân thiện", en: "Friendly call", sure: true },
@@ -741,6 +746,116 @@ function slotGuide() {
     : `<ul><li>Slot 1 mở khi lên Juvenile, slot 2 ở Sub-adult, slot 3 gần Adult. Lớn nhanh hơn thì mở sớm hơn.</li><li>Lên Prime / Elder mở thêm slot 4; con nở từ tổ người chơi có thể thừa hưởng mutation của bố mẹ.</li><li>Mutation "lối sống" (ghi "mở khoá bằng nhiệm vụ") mở sau khi làm nhiệm vụ trong game và giữ cho cả tài khoản.</li><li>Tránh mutation có hại khi được thừa hưởng: co giật, mù, vô sinh.</li></ul>`;
 }
 
+// ---------- survival basics shown in every profile ----------
+// Minutes from hatchling to adult on a good diet (theisle.info species pages; values change with patches)
+const STATS = {
+  rex: { growthMin: 380 }, allo: { growthMin: 180 }, carno: { growthMin: 135 }, dilo: { growthMin: 110 },
+  herrera: { growthMin: 100 }, troodon: { growthMin: 40 }, omni: { growthMin: 75 }, deino: { growthMin: 300 },
+  ptera: { growthMin: 40 }, trike: { growthMin: 360 }, stego: { growthMin: 300 }, diablo: { growthMin: 180 },
+  tenonto: { growthMin: 105 }, maia: { growthMin: 110 }, pachy: { growthMin: 130 }, dryo: { growthMin: 30 },
+  hypsi: { growthMin: 30 }, galli: { growthMin: 105 }
+};
+// Herbivore plant lists we could confirm (each plant gives one nutrient)
+const PLANTS = {
+  stego: { b: "Sumac", g: "Pumpkin", a: "Marigold" },
+  pachy: { b: "Agave", g: "Coconut (crack it open first)", a: "Orange" },
+  dryo:  { b: "Agave", g: "Sunchoke root", a: "Variegated orange" },
+  galli: { b: "Sumac, bullfrog", g: "Sunchoke root, pumpkin", a: "Mango, crab" }
+};
+// Plants confirmed for a species without a nutrient split
+const PLANT_LIST = { tenonto: ["Mountain Ash", "Wild Potato Root", "Radish Root"] };
+
+function nutriHtml(d) {
+  const en = lang === "en", li = a => a.map(v => "<li>" + v + "</li>").join("");
+  const intro = en
+    ? "Every dinosaur has three nutrient bars: <b>Protein (β)</b>, <b>Lipid (γ)</b> and <b>Carbohydrate (α)</b>. Keeping all three filled makes you grow much faster and adds healing buffs. Letting them run low leaves you <b>malnourished</b>: growth slows by about 75% and you cannot breed."
+    : "Mỗi loài có 3 thanh chất: <b>Protein (β)</b>, <b>Lipid (γ)</b> và <b>Carbohydrate (α)</b>. Ăn đủ cả ba thì lớn nhanh hơn nhiều và được thêm buff hồi phục. Để thiếu lâu sẽ bị <b>suy dinh dưỡng</b>: lớn chậm đi khoảng 75% và không đẻ được.";
+  const carn = en
+    ? ["<b>Protein (β)</b>: the heart", "<b>Lipid (γ)</b>: the intestines", "<b>Carbohydrate (α)</b>: the two lungs", "<b>Stomach</b>: gives whichever nutrient the prey had most of, so eat it last", "Open the carcass and press <kbd>G</kbd> to pick up one organ at a time"]
+    : ["<b>Protein (β)</b>: tim", "<b>Lipid (γ)</b>: ruột", "<b>Carbohydrate (α)</b>: hai lá phổi", "<b>Dạ dày</b>: cho chất mà con mồi có nhiều nhất, nên ăn sau cùng", "Mở bụng xác rồi bấm <kbd>G</kbd> để nhặt từng nội tạng"];
+  const p = PLANTS[d.id], list = PLANT_LIST[d.id];
+  const sniff = en ? "Hold <kbd>Q</kbd> to sniff: plants show the α β γ symbol of the nutrient they give." : "Giữ <kbd>Q</kbd> đánh hơi: cây sẽ hiện biểu tượng α β γ của chất nó cho.";
+  const herb = p
+    ? ["<b>Protein (β)</b>: " + p.b, "<b>Lipid (γ)</b>: " + p.g, "<b>Carbohydrate (α)</b>: " + p.a, sniff]
+    : (en
+      ? ["Each herbivore has three favourite plants, one per nutrient.", list ? "This species: <b>" + list.join(", ") + "</b>." : sniff, "Fruit and sugary plants are the usual carbohydrate source."]
+      : ["Mỗi loài ăn cỏ có 3 loại cây ưa thích, mỗi loại cho một chất.", list ? "Loài này: <b>" + list.join(", ") + "</b>." : sniff, "Trái cây và cây nhiều đường thường cho Carbohydrate."]);
+  let src;
+  if (d.diet === "carn") src = "<ul>" + li(carn) + "</ul>";
+  else if (d.diet === "herb") src = "<ul>" + li(herb) + "</ul>";
+  else if (p) src = "<ul>" + li(herb) + "</ul>";
+  else src = "<p>" + (en ? "As an omnivore you can mix both:" : "Là loài ăn tạp nên dùng được cả hai cách:") + "</p><ul>" + li([carn[0], carn[1], carn[2], sniff]) + "</ul>";
+  const buffs = en
+    ? ["β: faster health regen", "γ: broken bones heal faster", "α: bleeding stops faster", "A <b>salt lick</b> empties a nutrient bar so you can refill it with another food"]
+    : ["β: hồi máu nhanh hơn", "γ: xương gãy liền nhanh hơn", "α: cầm máu nhanh hơn", "<b>Liếm đá muối</b> xả bớt một thanh chất để nạp chất khác"];
+  return "<p>" + intro + "</p>" + src + "<details class=\"sub\"><summary>" + (en ? "What each nutrient does" : "Tác dụng của từng chất") + "</summary><ul>" + li(buffs) + "</ul></details>";
+}
+
+function growthText(min, en) {
+  const h = Math.floor(min / 60), m = min % 60;
+  if (!h) return min + (en ? " minutes" : " phút");
+  return en ? h + " h" + (m ? " " + m + " min" : "") : h + " giờ" + (m ? " " + m + " phút" : "");
+}
+function careHtml(d) {
+  const en = lang === "en", st = STATS[d.id] || {}, li = a => a.filter(Boolean).map(v => "<li>" + v + "</li>").join("");
+  const sec = (title, body) => "<details class=\"sub care\"><summary>" + title + "</summary>" + body + "</details>";
+  const growth = en ? [
+    "<b>Hatchling</b>: very weak; parents feed it. It weans at about 20% growth.",
+    "<b>Juvenile</b>: feeds itself; mutation slot 1 opens. Still easy prey.",
+    "<b>Sub-adult</b> (about halfway): mutation slot 2 opens; can fight back against smaller hunters.",
+    "<b>Adult</b>: full size and strength; mutation slot 3 opens near this stage.",
+    "<b>Prime</b>: after adulthood with good care; adds a 4th mutation slot.",
+    st.growthMin ? "This species takes about <b>" + growthText(st.growthMin, true) + "</b> to reach adult on a good diet." : null
+  ] : [
+    "<b>Hatchling</b>: rất yếu, bố mẹ cho ăn; cai sữa ở khoảng 20%.",
+    "<b>Juvenile</b>: tự kiếm ăn, mở slot mutation 1. Vẫn rất dễ bị săn.",
+    "<b>Sub-adult</b> (khoảng nửa đường): mở slot mutation 2, đánh trả được thợ săn nhỏ hơn.",
+    "<b>Adult</b>: đủ kích thước và sức mạnh; slot mutation 3 mở gần giai đoạn này.",
+    "<b>Prime</b>: sau khi trưởng thành và được chăm tốt; thêm slot mutation 4.",
+    st.growthMin ? "Loài này mất khoảng <b>" + growthText(st.growthMin, false) + "</b> để trưởng thành nếu ăn uống đủ chất." : null
+  ];
+  const nest = en ? [
+    "Hold <kbd>N</kbd> near a partner of the same species to pair up, then the female lays eggs at a nest (<kbd>E</kbd>).",
+    "<b>Nesting Grounds</b> on the map make hatchlings grow faster.",
+    "Eggs can spoil if the nest is abandoned, the parents are malnourished or the temperature is wrong.",
+    "Hatchlings take on the diet of the parent who feeds them; they wean at about 20%.",
+    d.id === "maia" ? "Maiasaura is built for nest care: guard the nest as a herd." : null
+  ] : [
+    "Giữ <kbd>N</kbd> gần bạn đời cùng loài để ghép đôi, sau đó con cái đẻ trứng ở tổ (<kbd>E</kbd>).",
+    "<b>Nesting Grounds</b> trên bản đồ giúp con lớn nhanh hơn.",
+    "Trứng có thể hỏng nếu bỏ tổ, bố mẹ thiếu dinh dưỡng hoặc nhiệt độ không hợp.",
+    "Con ăn theo chế độ ăn của bố/mẹ cho nó ăn; cai sữa ở khoảng 20%.",
+    d.id === "maia" ? "Maiasaura sinh ra để chăm tổ: cả đàn cùng canh tổ." : null
+  ];
+  const injury = en ? [
+    "<b>Fractures</b> hit the head, body or legs. Main causes: high falls and Pachycephalosaurus rams. Breaking bones again and again adds the permanent <b>Glass Bones</b> debuff (you fracture more easily for the rest of that life).",
+    "<b>Bleeding</b> drains health over time. Stop sprinting, find cover, then rest with <kbd>H</kbd>, or wallow in mud.",
+    "Helpful mutations: Osteosclerosis (fractures), Epidermal Fibrosis (bleeding)."
+  ] : [
+    "<b>Gãy xương</b> ở đầu, thân hoặc chân. Nguyên nhân chính: ngã từ trên cao và bị Pachycephalosaurus húc. Gãy nhiều lần sẽ dính hiệu ứng vĩnh viễn <b>Glass Bones</b> (dễ gãy hơn cho đến hết đời con đó).",
+    "<b>Chảy máu</b> làm mất máu dần. Đừng chạy nước rút, tìm chỗ khuất rồi nằm nghỉ bằng <kbd>H</kbd>, hoặc lăn bùn.",
+    "Mutation hữu ích: Osteosclerosis (gãy xương), Epidermal Fibrosis (chảy máu)."
+  ];
+  const sick = en
+    ? ["<b>Vomit Sickness</b>: go to a salt rock and press <kbd>E</kbd> to lick it; it clears over a few minutes.", "Resting in the open while sick or bleeding is risky: you cannot react quickly."]
+    : ["<b>Vomit Sickness</b> (bệnh nôn): tới đá muối và bấm <kbd>E</kbd> để liếm, khỏi dần trong vài phút.", "Nằm nghỉ chỗ trống khi đang bệnh hay chảy máu rất nguy hiểm vì không phản ứng kịp."];
+  const hunger = en ? [
+    "If the hunger or thirst bar empties you lose health and die, no predator needed.",
+    "Sea water is undrinkable unless you have the <b>Reniculate Kidneys</b> mutation.",
+    d.diet !== "herb" ? "Carnivores with <b>Hematophagy</b> regain some thirst while eating corpses." : null
+  ] : [
+    "Để cạn thanh đói hoặc khát là mất máu rồi chết, không cần ai cắn.",
+    "Nước biển không uống được nếu chưa có mutation <b>Reniculate Kidneys</b>.",
+    d.diet !== "herb" ? "Loài ăn thịt có <b>Hematophagy</b> sẽ đỡ khát khi ăn xác." : null
+  ];
+  return sec(en ? "Growth stages" : "Các giai đoạn lớn", "<ul>" + li(growth) + "</ul>")
+    + sec(en ? "Nesting and raising young" : "Làm tổ và nuôi con", "<ul>" + li(nest) + "</ul>")
+    + sec(en ? "Injuries" : "Chấn thương", "<ul>" + li(injury) + "</ul>")
+    + sec(en ? "Sickness" : "Bệnh", "<ul>" + li(sick) + "</ul>")
+    + sec(en ? "Hunger, thirst and salt water" : "Đói, khát và nước mặn", "<ul>" + li(hunger) + "</ul>");
+}
+
+
 function renderPanel() {
   const d = DINOS.find(x => x.id === openId);
   if (!d) { $("#sheet").hidden = true; return; }
@@ -766,7 +881,8 @@ function renderPanel() {
     </dl>
     <div class="block"><h3>${t.h.life}</h3><p>${esc(x.life)}</p></div>
     <div class="block"><h3>${t.h.food}</h3><p>${esc(x.food)}</p></div>
-    <div class="block"><h3>${t.h.tips}</h3><ul>${li(x.tips)}</ul></div>
+    <div class="block"><h3>${en ? "Nutrition (3 nutrients)" : "Dinh dưỡng (3 chất)"}</h3>${nutriHtml(d)}</div>
+    <div class="block"><h3>${t.h.tips}</h3><ul>${li(x.tips)}</ul>${careHtml(d)}</div>
     <div class="duo">
       <div class="block"><h3>${t.h.atk}</h3><ul>${li(x.atk)}</ul>${keyList(atkKeys)}</div>
       <div class="block"><h3>${t.h.def}</h3><ul>${li(x.def)}</ul>${keyList(defKeys)}</div>
